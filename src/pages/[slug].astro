@@ -1,0 +1,86 @@
+---
+import Layout from '../layouts/Layout.astro';
+import type { Couple } from '../lib/content/schema';
+import { findCoupleBySlug } from '../lib/repositories/invitations';
+
+const slug = Astro.params.slug ?? '';
+let couple: Couple | null = null;
+let failed = false;
+
+try {
+  couple = findCoupleBySlug(slug);
+} catch (error) {
+  console.error(`[invitations] Failed to load slug: ${slug}`, error);
+  failed = true;
+}
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+if (!couple) Astro.response.status = failed ? 500 : 404;
+
+const title = couple
+  ? `${couple.groom.name}与${couple.bride.name}的婚礼`
+  : failed ? '暂时无法打开请柬' : '未找到请柬';
+---
+
+<Layout title={title} noindex>
+  <main>
+    {couple ? (
+      <>
+        <h1>我们结婚啦</h1>
+        <dl>
+          <div>
+            <dt>新郎</dt>
+            <dd>{couple.groom.name}</dd>
+          </div>
+          <div>
+            <dt>新娘</dt>
+            <dd>{couple.bride.name}</dd>
+          </div>
+        </dl>
+      </>
+    ) : (
+      <>
+        <h1>{title}</h1>
+        <p>{failed ? '请稍后刷新页面重试。' : '请检查链接是否完整、正确。'}</p>
+      </>
+    )}
+  </main>
+</Layout>
+
+<style>
+  main {
+    min-height: 100svh;
+    padding: 3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+  }
+
+  dl {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem 4rem;
+    max-width: 100%;
+  }
+
+  dl > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  dd {
+    margin: 0.5rem 0 0;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+</style>

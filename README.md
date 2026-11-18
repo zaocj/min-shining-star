@@ -2,7 +2,9 @@
 
 多新人婚礼请柬平台。架构与后续开发要求见 [TECH_PLAN.md](./TECH_PLAN.md)。
 
-当前仅完成开发环境准备：保留 Astro 初始页面，尚未实现业务表、数据库单例、迁移脚本、健康检查、请柬路由、模板和数据录入功能。
+当前已实现最小请柬页面：访问 `/{slug}`，从现有 SQLite `invitations` 表查询已发布记录，在服务端渲染 `content.groom.name` 和 `content.bride.name`。不存在、非法 slug 或未发布记录返回 404，数据异常返回 500。首页暂保留 Astro 初始页面。
+
+本地现有示例可访问 `http://localhost:4321/lin-yu-7k2m`。不同 slug 对应不同数据库记录，页面不公开列出请柬链接。数据库须已存在且包含 `invitations` 表；本次不修改现有表和数据，也未新增迁移、录入或种子脚本。
 
 ## 环境
 
@@ -57,9 +59,9 @@ npm run dev
 
 ## 数据库工具
 
-`drizzle.config.ts` 使用 Node 原生能力加载 `.env`，指定 SQLite 方言、`src/lib/db/schema.ts` 和 `drizzle/` 迁移目录。schema 目前为空，未生成迁移或创建业务数据库。
+`drizzle.config.ts` 使用 Node 原生能力加载 `.env`，指定 SQLite 方言、`src/lib/db/schema.ts` 和 `drizzle/` 迁移目录。schema 已映射本地现有 `invitations` 表；仓库尚未包含初始化迁移，空数据库不能直接运行此页面。
 
-后续在 M1 中实现 schema、单例连接及迁移脚本；连接需要启用方案规定的 WAL、NORMAL、foreign_keys 和 busy_timeout。生产只执行审核后的 SQL 迁移，禁止 `drizzle-kit push`。生产迁移脚本须能在 `npm ci --omit=dev` 后运行。
+数据库连接由 `src/lib/db/client.ts` 全局复用，已启用 WAL、NORMAL、foreign_keys 和 busy_timeout。后续补齐迁移脚本；生成首份迁移前需要核对现有数据库迁移历史，避免重复建表。生产只执行审核后的 SQL 迁移，禁止 `drizzle-kit push`。生产迁移脚本须能在 `npm ci --omit=dev` 后运行。
 
 依赖检查记录：当前稳定版 drizzle-kit 的旧版 `@esbuild-kit` 依赖链带入 esbuild 0.18.20，npm 报告 4 项中危告警（同一漏洞及其依赖链，GHSA-67mh-4wv8-2f99）。这些包属于开发依赖，生产 `--omit=dev` 安装不包含它们。本次保留稳定版，未强制升级到预发布版本或覆盖上游依赖。
 
