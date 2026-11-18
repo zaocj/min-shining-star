@@ -14,7 +14,15 @@ try {
   failed = true;
 }
 
-Astro.response.headers.set('Cache-Control', 'no-store');
+const cacheable = couple !== null && !failed &&
+  ['GET', 'HEAD'].includes(Astro.request.method) &&
+  !Astro.url.search &&
+  !Astro.request.headers.has('Cookie') &&
+  !Astro.request.headers.has('Authorization');
+
+Astro.response.headers.set('Cache-Control', cacheable
+  ? 'public, max-age=0, s-maxage=60'
+  : 'no-store');
 if (!couple) Astro.response.status = failed ? 500 : 404;
 
 const title = couple

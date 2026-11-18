@@ -67,6 +67,10 @@ npm run dev
 
 ## 部署准备
 
+Docker Compose 部署按 [DOCKER_INSTALL.md](./DOCKER_INSTALL.md) 执行，包含安装、镜像构建与上传、数据库初始化、Nginx 缓存和 HTTPS。镜像在本地或 CI 构建，服务器无需安装 Node.js 或 PM2。已发布请柬允许共享缓存 60 秒，错误页及携带查询参数、Cookie 或 Authorization 的请求不缓存。
+
+下面保留直接使用 Node.js + PM2 的部署方式：
+
 在本地或 CI 检查并构建，在目标服务器安装与其系统和 CPU 架构匹配的生产依赖。不要上传本机的 `node_modules`，不要在 2G 服务器上构建 Astro。
 
 服务器准备 `.env.production` 后，可使用已提供的进程配置：
