@@ -9,6 +9,7 @@
     "npm": ">=10"
   },
   "scripts": {
+    "docker:build": "node scripts/build-image.mjs",
     "dev": "astro dev --background",
     "dev:stop": "astro dev stop",
     "dev:status": "astro dev status",

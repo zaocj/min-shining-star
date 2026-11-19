@@ -271,7 +271,7 @@ private/                             # 真实导入资料，沿用 Git 忽略规
 - [ ] 新人和男方为 1 月 1 日，女方为 1 月 2 日；各自日期、农历、地点、导航和倒计时匹配。
 - [ ] 男方显示真实父母署名；女方以女儿在先，不出现男方父母姓名或未经要求添加的女方父母署名。
 - [ ] 三条链接独立的 title、description、og、canonical 在原始 HTML 可见，分享图为 COS JPEG；URL 使用部署时的 `SITE_URL`。
-- [ ] 当前部署文档有 `minviation.cloud`，旧站是 `minvitation.site`，不得把两者拼写混用；应用域名从环境配置取值，素材域名固定采用已核对的 `image.minvitation.site`。
+- [x] 2026-11-19 将生产应用域名切换为已备案的 `minvitation.site`；应用域名从环境配置取值，素材域名固定采用已核对的 `image.minvitation.site`。切换与验证记录见 [DOMAIN_SWITCH.md](./DOMAIN_SWITCH.md)。
 - [ ] 保留已有示例记录和展示行为；不把真实固定照片套到示例 slug；损坏新记录返回 500 且 no-store。
 - [ ] 现有页面及 Nginx 缓存规则保留；数据导入后考虑 60 秒共享缓存窗口再检查线上内容。
 

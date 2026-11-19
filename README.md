@@ -6,6 +6,8 @@
 
 请柬详情接口为 `GET /api/v1/invitations/{slug}`；API 与 SSR 页面复用同一服务。数据库保存 COS 图片 URL 和元数据，浏览器直接向 `image.minvitation.site` 加载媒体。固定图片在模板中，相册由后端返回。
 
+生产域名为 `https://minvitation.site`，直接访问服务器；完整路径见 [ONLINE_LINKS.md](./ONLINE_LINKS.md)，域名、证书、DNS 与备份记录见 [DOMAIN_SWITCH.md](./DOMAIN_SWITCH.md)。
+
 | 本地页面 | 模板 ID |
 | --- | --- |
 | [新人版](http://localhost:4321/sddlh4zxebmfx) | `tc00ufeo7r67y` |
@@ -119,7 +121,7 @@ npm run invitation:import -- private/invitations.json --apply --publish
 
 `PUBLIC_AMAP_KEY` 与 `PUBLIC_AMAP_SECURITY_CODE` 是高德 Web JS SDK 的公开浏览器配置，构建时注入；不出现在请柬 JSON。修改后需重新构建，域名须符合高德配置。留空仍显示场地和导航按钮；SDK 或地理编码失败会退回导航提示卡。
 
-Docker 构建可通过同名 `--build-arg` 传入这两个公开配置；独立 Node 构建从本地环境读取。应用域名来自 `SITE_URL`，与固定媒体域名分别管理。
+推荐使用 `npm run docker:build`，自动从本地 `.env` / `.env.production` 读取这两个配置并通过同名 build args 注入；缺少时拒绝构建，避免上线后只剩导航提示卡。运行 `npm run docker:build -- --dry-run` 可仅检查配置，`--platform linux/arm64` 可指定 ARM 服务器，明确关闭内嵌地图时使用 `--without-map`。独立 Node 构建从本地环境读取。应用域名来自 `SITE_URL`，与固定媒体域名分别管理。
 
 
 <!-- 以后仅更新代码、没有资料变更时，服务器只需执行： -->

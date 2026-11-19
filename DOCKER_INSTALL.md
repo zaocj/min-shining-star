@@ -2,6 +2,8 @@
 
 通过 SSH 登录服务器后，按顺序执行。适用于尚未安装 Docker 的 Ubuntu 24.04 服务器，需要 sudo 权限。
 
+当前生产域名为 `minvitation.site`，已配置为服务器直连。域名切换、证书路径、DNS 冲突处理及配置备份见 [DOMAIN_SWITCH.md](./DOMAIN_SWITCH.md)，实际页面与 API 地址见 [ONLINE_LINKS.md](./ONLINE_LINKS.md)。已有部署更新镜像时不需要重做域名、证书或数据库导入。
+
 ## 1. 添加 Docker 官方软件源
 
 ```bash
@@ -75,8 +77,9 @@ sudo apt install -y sqlite3
 镜像内部使用 Debian（`node:24-bookworm-slim`），可以正常运行在 Ubuntu 24.04 服务器上，不需要改成 Ubuntu 基础镜像。
 
 ```bash
+# 自动读取本地 .env / .env.production 的高德配置。
 # 按服务器架构选择；ARM 服务器改为 linux/arm64。
-docker buildx build --platform linux/amd64 --load -t shining-star:latest .
+npm run docker:build -- --platform linux/amd64
 
 # 把镜像导出为压缩文件
 docker save -o /tmp/shining-star-image.tar shining-star:latest && gzip -f /tmp/shining-star-image.tar
@@ -90,6 +93,8 @@ scp deploy/nginx.conf ubuntu@124.222.10.61:/srv/shining-star/nginx.conf
 ```
 
 镜像构建会自动安装依赖、检查类型并构建 Astro，不需要上传源码或 `node_modules`。`.env` 和本地数据库不会打进镜像。
+
+构建前在本地 `.env` 或 `.env.production` 填写 `PUBLIC_AMAP_KEY`、`PUBLIC_AMAP_SECURITY_CODE`；脚本按“进程环境变量 > .env.production > .env”的优先级读取，只把这两个浏览器 SDK 配置以 build args 注入，缺少时直接报错。可先运行 `npm run docker:build -- --dry-run` 检查。若明确不需要内嵌地图，使用 `npm run docker:build -- --without-map`。
 
 先确认构建成功，再执行导出和上传。这里先导出 tar，成功后才压缩，避免导出失败却生成无效的 gzip 文件。
 
@@ -150,7 +155,7 @@ curl -I http://127.0.0.1:4321/lin-yu-7k2m
 
 ## 9. 在服务器启用 Nginx 缓存和 HTTPS
 
-本节使用 Certbot 申请证书；如果已经下载 `minviation.cloud` 的证书文件，改为执行第 12 节，不需要再申请证书。
+本节使用 Certbot 申请证书；如果已经下载 `minvitation.site` 的证书文件，改为执行第 12 节，不需要再申请证书。
 
 ```bash
 cd /srv/shining-star
@@ -218,14 +223,14 @@ sudo sqlite3 /var/lib/invitation/app.db ".backup '/var/backups/shining-star/app-
 在本地项目根目录重新执行（按服务器架构调整 platform）：
 
 ```bash
-docker buildx build --platform linux/amd64 --load --progress=plain -t shining-star:latest .
+npm run docker:build -- --platform linux/amd64
 ```
 
 构建成功后，再执行第 6 步的导出和上传命令。失败时不要继续导出；`No such image: shining-star:latest` 表示镜像尚未构建成功。`--progress=plain` 可以显示具体下载错误，重试会复用已成功的构建步骤。
 
-## 12. 使用已下载的 minviation.cloud 证书
+## 12. 使用已下载的 minvitation.site 证书
 
-上传本地的 `minviation.cloud_nginx.zip`，在服务器解压后安装其中的 `.crt` 和 `.key`；`.pem` 和 `.csr` 不参与 Nginx 配置。证书覆盖 `minviation.cloud` 与 `www.minviation.cloud`。
+上传本地的 `minvitation.site_nginx.zip`，在服务器解压后安装其中的 `.crt` 和 `.key`；`.pem` 和 `.csr` 不参与 Nginx 配置。证书覆盖 `minvitation.site` 与 `www.minvitation.site`。
 
 先确认域名 A 记录指向 `124.222.10.61`，服务器安全组和已启用的防火墙允许 TCP 80、443。
 
@@ -234,9 +239,9 @@ docker buildx build --platform linux/amd64 --load --progress=plain -t shining-st
 下面假设 SSH 用户是 ubuntu；如果使用其他账号，请替换用户名。
 
 ```bash
-chmod 600 /Users/zj/Downloads/minviation.cloud_nginx.zip
+chmod 600 /Users/zj/Downloads/minvitation.site_nginx.zip
 
-scp /Users/zj/Downloads/minviation.cloud_nginx.zip \
+scp /Users/zj/Downloads/minvitation.site_nginx.zip \
   /Users/zj/my_code/shining-star/deploy/nginx-https.conf \
   ubuntu@124.222.10.61:/srv/shining-star/
 ```
@@ -249,17 +254,17 @@ scp /Users/zj/Downloads/minviation.cloud_nginx.zip \
 cd /srv/shining-star
 
 sudo apt install -y unzip
-chmod 600 minviation.cloud_nginx.zip
+chmod 600 minvitation.site_nginx.zip
 install -d -m 700 cert-upload
-unzip -o minviation.cloud_nginx.zip -d cert-upload
+unzip -o minvitation.site_nginx.zip -d cert-upload
 
-sudo install -d -o root -g root -m 700 /etc/nginx/ssl/minviation.cloud
+sudo install -d -o root -g root -m 700 /etc/nginx/ssl/minvitation.site
 sudo install -o root -g root -m 644 \
-  cert-upload/minviation.cloud_nginx/minviation.cloud_bundle.crt \
-  /etc/nginx/ssl/minviation.cloud/
+  cert-upload/minvitation.site_nginx/minvitation.site_bundle.crt \
+  /etc/nginx/ssl/minvitation.site/
 sudo install -o root -g root -m 600 \
-  cert-upload/minviation.cloud_nginx/minviation.cloud.key \
-  /etc/nginx/ssl/minviation.cloud/
+  cert-upload/minvitation.site_nginx/minvitation.site.key \
+  /etc/nginx/ssl/minvitation.site/
 
 sudo install -d -o www-data -g www-data /var/cache/nginx/shining-star
 
@@ -284,18 +289,45 @@ nano .env.production
 把 SITE_URL 设置为：
 
 ```dotenv
-SITE_URL=https://minviation.cloud
+SITE_URL=https://minvitation.site
 ```
 
 保存后执行：
 
 ```bash
 sudo docker compose up -d --force-recreate
-curl -I https://minviation.cloud/lin-yu-7k2m
+curl -I https://minvitation.site/sddlh4zxebmfx
 ```
 
-用浏览器访问 `https://minviation.cloud/lin-yu-7k2m`。若返回 502，再检查 `sudo docker compose ps -a` 和 `sudo docker compose logs --tail=50 app`。
+用浏览器访问 `https://minvitation.site/sddlh4zxebmfx`。若返回 502，再检查 `sudo docker compose ps -a` 和 `sudo docker compose logs --tail=50 app`。
 
-此证书在北京时间 2027 年 2 月 16 日到期，需在到期前续签并替换 `.crt`、`.key` 文件，然后检查并重新加载 Nginx。手动安装的证书不会由之前安装的 Certbot 自动续期。
+此证书在北京时间 2027 年 2 月 17 日 15:59:59 到期，需在到期前续签并替换 `.crt`、`.key` 文件，然后检查并重新加载 Nginx。手动安装的证书不会由之前安装的 Certbot 自动续期。
 
 参考：[Docker 安装](https://docs.docker.com/engine/install/ubuntu/)、[跨平台镜像构建](https://docs.docker.com/build/building/multi-platform/)、[Compose 配置](https://docs.docker.com/reference/compose-file/services/)、[Astro Node 部署](https://docs.astro.build/en/guides/integrations-guide/node/)、[Nginx 缓存](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache)、[Nginx HTTPS 证书配置](https://nginx.org/en/docs/http/configuring_https_servers.html)。
+
+## 13. 地图显示成导航提示卡
+
+看到“请点击下方按钮查看路线”意味着前端构建时的 `PUBLIC_AMAP_KEY` 为空，组件没有加载地图 SDK。`PUBLIC_` 客户端变量在构建时固化，单独修改服务器 `.env.production` 再重启无法改变已有前端产物。
+
+在 Mac 项目目录执行：
+
+```bash
+npm run docker:build -- --dry-run
+npm run docker:build
+
+docker save -o /tmp/shining-star-image.tar shining-star:latest && gzip -f /tmp/shining-star-image.tar
+scp /tmp/shining-star-image.tar.gz ubuntu@124.222.10.61:/srv/shining-star/
+```
+
+然后在服务器执行：
+
+```bash
+cd /srv/shining-star
+sudo docker load -i shining-star-image.tar.gz && sudo docker compose up -d --force-recreate app
+```
+
+本次仅更新地图构建配置，不需要重新导入请柬或替换数据库。等待页面缓存约 60 秒，并刷新浏览器加载新资源。
+
+若地图配置已注入但仍加载失败，再检查高德 Key 是否为 Web 端（JS API）类型、安全校验配置是否配套、域名白名单是否允许实际站点域名，以及浏览器控制台的高德报错。此时与缺少 Key 的提示卡属于不同原因。
+
+参考：[Astro 环境变量](https://docs.astro.build/en/guides/environment-variables/)、[高德 JS API 加载](https://lbs.amap.com/api/javascript-api-v2/guide/abc/load)。

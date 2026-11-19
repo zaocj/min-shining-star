@@ -1,14 +1,14 @@
 # Shining Star 访问路径汇总
 
 > 更新日期：2026-11-19。
-> 生产域名沿用现有部署配置：`https://minviation.cloud`。
+> 生产域名（2026-11-19 从旧域名切换）：`https://minvitation.site`。
 > 本地开发地址：`http://127.0.0.1:4321`。
 
 ## 1. 首页
 
 | 用途 | 路径 | 线上地址 |
 | --- | --- | --- |
-| 平台首页，目前保留 Astro 初始页面 | `/` | [打开首页](https://minviation.cloud/) |
+| 平台首页，目前保留 Astro 初始页面 | `/` | [打开首页](https://minvitation.site/) |
 
 ## 2. 正式请柬页面
 
@@ -16,9 +16,9 @@
 
 | 请柬版本 | slug / 页面路径 | 线上地址 | 模板 ID |
 | --- | --- | --- | --- |
-| 新人版 | `/sddlh4zxebmfx` | [https://minviation.cloud/sddlh4zxebmfx](https://minviation.cloud/sddlh4zxebmfx) | `tc00ufeo7r67y` |
-| 男方父母版 | `/s10nxtffcpevs` | [https://minviation.cloud/s10nxtffcpevs](https://minviation.cloud/s10nxtffcpevs) | `th0sxg4o5vj81` |
-| 女方父母版 | `/s6jtlzuaybjru` | [https://minviation.cloud/s6jtlzuaybjru](https://minviation.cloud/s6jtlzuaybjru) | `th0sxg4o5vj81` |
+| 新人版 | `/sddlh4zxebmfx` | [https://minvitation.site/sddlh4zxebmfx](https://minvitation.site/sddlh4zxebmfx) | `tc00ufeo7r67y` |
+| 男方父母版 | `/s10nxtffcpevs` | [https://minvitation.site/s10nxtffcpevs](https://minvitation.site/s10nxtffcpevs) | `th0sxg4o5vj81` |
+| 女方父母版 | `/s6jtlzuaybjru` | [https://minvitation.site/s6jtlzuaybjru](https://minvitation.site/s6jtlzuaybjru) | `th0sxg4o5vj81` |
 
 男女双方父母共用同一个模板；姓名顺序、称呼、署名、婚宴日期和地点由各自 slug 对应的数据决定。
 
@@ -28,9 +28,9 @@
 
 | 请柬版本 | 接口路径 | 线上接口 |
 | --- | --- | --- |
-| 新人版 | `/api/v1/invitations/sddlh4zxebmfx` | [查看新人版 JSON](https://minviation.cloud/api/v1/invitations/sddlh4zxebmfx) |
-| 男方父母版 | `/api/v1/invitations/s10nxtffcpevs` | [查看男方父母版 JSON](https://minviation.cloud/api/v1/invitations/s10nxtffcpevs) |
-| 女方父母版 | `/api/v1/invitations/s6jtlzuaybjru` | [查看女方父母版 JSON](https://minviation.cloud/api/v1/invitations/s6jtlzuaybjru) |
+| 新人版 | `/api/v1/invitations/sddlh4zxebmfx` | [查看新人版 JSON](https://minvitation.site/api/v1/invitations/sddlh4zxebmfx) |
+| 男方父母版 | `/api/v1/invitations/s10nxtffcpevs` | [查看男方父母版 JSON](https://minvitation.site/api/v1/invitations/s10nxtffcpevs) |
+| 女方父母版 | `/api/v1/invitations/s6jtlzuaybjru` | [查看女方父母版 JSON](https://minvitation.site/api/v1/invitations/s6jtlzuaybjru) |
 
 接口返回 `templateId`、人物、署名、婚期、婚宴、文案、相册、音乐和分享信息。字段说明见 [接口设计文档](./INVITATION_API_DESIGN.md)。
 

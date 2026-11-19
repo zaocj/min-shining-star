@@ -81,3 +81,25 @@
 - 实际执行 `docker buildx build --platform linux/amd64 --load --progress=plain -t shining-star:latest .` 成功，镜像内 npm ci、52 文件类型检查、Astro 构建均通过。
 - 最终生产镜像以默认 node 用户在隔离的虚构测试数据库中完成资料导入与在线备份，JSON API 和 SSR 页面均返回 200，人物顺序、场地及 canonical 正确。
 - 镜像已导出至 `/tmp/shining-star-image.tar.gz`；测试容器已停止，没有修改服务器或线上数据库。
+
+## 高德内嵌地图构建配置修复（2026-11-19）
+
+截图中的“请点击下方按钮查看路线”是 Key 为空时的提示卡。此前直接执行 Docker buildx 未传 PUBLIC_AMAP_KEY / PUBLIC_AMAP_SECURITY_CODE，而 .env 被 Docker 忽略，导致客户端产物缺少地图配置。
+
+新增 `npm run docker:build`，自动读取本地 .env 和 .env.production，并通过 build args 注入这两个配置。默认缺少任一个值即拒绝构建；明确只需导航提示卡时用 --without-map。脚本不从配置文件向 Docker 传递数据库等服务端变量，也不输出 Key 的值。
+
+本次验证：
+
+- 增加 2 项构建配置用例，现有与新增测试合计 11 项全部通过。
+- 使用新命令构建 linux/amd64 生产镜像成功，54 文件类型检查无错误、警告或提示。
+- 使用隔离的本地数据库备份运行实际生产镜像，Chrome 中高德 SDK、地图瓦片和位置标记正常显示，检测到 1 个地图 canvas 和 1 个 marker；缺少 Key 的提示消失，控制台无 error/warn。
+- 仍使用原有的高德地址解析结果；未人工确认地图标注与二部实际位置的对应关系。
+- 新镜像已重新导出 `/tmp/shining-star-image.tar.gz`，未上传服务器；测试容器已停止，线上数据未修改。
+
+地图更新的本地与服务器命令见 [部署文档第 13 节](./DOCKER_INSTALL.md#13-地图显示成导航提示卡)。
+
+## 生产域名切换（2026-11-19）
+
+已在实际服务器安装 `minvitation.site` / `www.minvitation.site` 的证书、追加 Nginx 站点、修改 `SITE_URL` 并重新创建应用容器。原根域名的 Pages CNAME 已修改为 A 记录 `124.222.10.61`；复核时旧 Pages 自定义域名绑定已经解除，未重复删除。保留 COS 媒体解析、旧项目及生产数据库。
+
+切换前指定源站 IP 验证三个页面与三个接口全部 200，TLS 校验通过且 canonical 为新域名；切换后 Google、Cloudflare DNS 均返回服务器 IP，服务器正常公网 DNS 请求三个页面全部 200。配置备份、证书到期时间及浏览器最终复核状态见 [DOMAIN_SWITCH.md](./DOMAIN_SWITCH.md)。
