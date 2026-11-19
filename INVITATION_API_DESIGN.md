@@ -284,7 +284,7 @@ meta 的 canonicalPath 由后端根据 slug 生成。Astro layout 使用部署�
     "templateOptions": { "opening": "envelope", "autoScroll": true, "showCountdown": true, "showCalendar": false },
     "meta": {
       "title": "儿子囍儿媳 · 婚礼请柬",
-      "description": "赵壮虎 · 刘永娟 敬邀，谨为儿子赵杰与儿媳梁紫艺于2027年1月1日在清雅苑（二部）举行喜宴，09:30迎宾，12:00开席。",
+      "description": "赵壮虎 · 刘永娟 敬邀，谨为儿子赵杰囍儿媳梁紫艺于2027年1月1日在清雅苑（二部）举行喜宴，09:30迎宾，12:00开席。",
       "canonicalPath": "/s10nxtffcpevs",
       "image": { "url": "https://image.minvitation.site/myphotos/share-cover.jpg", "width": 600, "height": 600, "alt": "赵杰与梁紫艺的婚纱合照" },
       "noindex": true
