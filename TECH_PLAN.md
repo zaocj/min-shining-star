@@ -5,6 +5,18 @@
 
 ---
 
+## 当前实现修订（2026-11-19）
+
+本轮 invitation 迁移已采用以下规则；与下文历史规划不一致时，以本节及 [接口设计](./INVITATION_API_DESIGN.md)、[迁移验证记录](./MIGRATION_REPORT.md) 为准：
+
+- 静态内容与两个模板入口使用 Astro；仅交互区域使用 React islands。
+- 不使用 Framer Motion 或 `swiper/react`；动效为 Tailwind/CSS，相册为 Swiper 原生 JS。
+- 三份独立 invitations 记录共用两套模板。新 slug 为 `s` 加 12 位随机字母数字，template_key / templateId 为 `t` 加 12 位随机字母数字；已发布旧示例保留兼容。
+- 实现 `GET /api/v1/invitations/{slug}`，与页面共享服务。公开接口 no-store；页面继续实际代码的 `max-age=0, s-maxage=60` 条件缓存。
+- 新存储 content_version 为 2，API schemaVersion 为 1；schemaVersion、内容版本与模板版本独立管理。
+- 媒体使用现有 COS 自定义域名，数据库只保存相册 URL/尺寸/描述；固定模板图片直接引用 COS。
+- 当前 React 共享客户端运行时 gzip 约 66KB，超出历史单页约 50KB 的目标；仅交互 islands 加载运行时，原生 Swiper 延迟到相册可见时加载，实际体积见验证记录。
+
 ## 1. 项目目标
 
 为多对结婚的新人提供在线婚礼请柬。每对新人通过自己的专属链接打开自己的请柬页面。

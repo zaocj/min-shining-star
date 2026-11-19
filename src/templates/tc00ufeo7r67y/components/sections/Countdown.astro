@@ -1,0 +1,19 @@
+---
+import type { TemplateView } from '../../../../lib/content/template-view';
+import CountdownTimer from '../../../../components/shared/CountdownTimer';
+import SectionHeading from './SectionHeading.astro';
+import WeddingCalendar from './WeddingCalendar.astro';
+import FallingPetals from '../../../../components/shared/FallingPetals.astro';
+const { invitation } = Astro.props as { invitation: TemplateView };
+---
+<section class="relative overflow-hidden bg-gradient-to-b from-primary-dark via-primary to-primary-dark py-24 sm:py-28">
+  <FallingPetals />
+  <img src="https://image.minvitation.site/assets/double-happiness-bg.webp" alt="" aria-hidden="true" class="pointer-events-none absolute -right-24 -top-24 w-96 opacity-[0.06] brightness-0 invert" />
+  <div class="relative mx-auto max-w-3xl px-6">
+    {invitation.data.templateOptions.showCountdown && <>
+      <SectionHeading title="婚礼倒计时" dark />
+      <CountdownTimer at={invitation.date} initialNow={Date.now()} prefix={invitation.countdownPrefix} done={invitation.countdownDone} theme="couple" client:visible />
+    </>}
+    {invitation.data.templateOptions.showCalendar && <WeddingCalendar invitation={invitation} />}
+  </div>
+</section>

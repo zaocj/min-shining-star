@@ -1,24 +1,52 @@
 ---
 import '../styles/global.css';
+import { SITE_URL } from 'astro:env/server';
+import type { InvitationData } from '../lib/content/invitation-schema';
 
 interface Props {
 	title?: string;
 	noindex?: boolean;
+	meta?: InvitationData['meta'];
+	themeColor?: string;
 }
 
-const { title = 'Astro Basics', noindex = false } = Astro.props;
+const { title = 'Shining Star', noindex = false, meta, themeColor } = Astro.props;
+const canonical = meta ? new URL(meta.canonicalPath, SITE_URL).href : undefined;
 ---
 
 <!doctype html>
 <html lang="zh-CN">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
-		{noindex && <meta name="robots" content="noindex, nofollow" />}
+		<title>{meta?.title ?? title}</title>
+		{(meta?.noindex ?? noindex) && <meta name="robots" content="noindex, nofollow" />}
+		{themeColor && <meta name="theme-color" content={themeColor} />}
+		{meta && <>
+			<meta name="description" content={meta.description} />
+			<meta property="og:type" content="website" />
+			<meta property="og:locale" content="zh_CN" />
+			<meta property="og:title" content={meta.title} />
+			<meta property="og:description" content={meta.description} />
+			<meta property="og:url" content={canonical} />
+			<meta property="og:image" content={meta.image.url} />
+			<meta property="og:image:secure_url" content={meta.image.url} />
+			<meta property="og:image:type" content="image/jpeg" />
+			<meta property="og:image:width" content={String(meta.image.width)} />
+			<meta property="og:image:height" content={String(meta.image.height)} />
+			<meta property="og:image:alt" content={meta.image.alt} />
+			<meta name="twitter:card" content="summary" />
+			<meta name="twitter:title" content={meta.title} />
+			<meta name="twitter:description" content={meta.description} />
+			<meta name="twitter:image" content={meta.image.url} />
+			<link rel="canonical" href={canonical} />
+			<link rel="preconnect" href="https://image.minvitation.site" />
+			<link rel="preload" as="image" href="https://image.minvitation.site/myphotos/header.webp" fetchpriority="high" />
+			<link rel="preload" as="font" type="font/woff2" href="/fonts/parents-calligraphy.woff2" crossorigin />
+		</>}
 	</head>
 	<body>
 		<slot />

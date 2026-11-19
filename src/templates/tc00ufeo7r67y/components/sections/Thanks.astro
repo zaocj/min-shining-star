@@ -1,0 +1,42 @@
+---
+import type { TemplateView } from '../../../../lib/content/template-view';
+const { invitation } = Astro.props as { invitation: TemplateView };
+---
+<footer class="relative overflow-hidden bg-cream pb-16 pt-24 sm:pt-28">
+      <img src="https://image.minvitation.site/assets/ribbon-decoration.webp" alt="" aria-hidden class="pointer-events-none absolute -top-8 left-1/2 w-[130%] max-w-none -translate-x-1/2 opacity-30 mix-blend-multiply"/>
+
+      <div class="relative mx-auto max-w-2xl px-6 text-center">
+        <h2 class="font-calligraphy text-4xl leading-snug text-primary sm:text-5xl" data-reveal="">
+          {invitation.thanks.title}
+        </h2>
+
+        <p class="mt-6 whitespace-pre-line leading-loose text-ink/70" data-reveal="">
+          {invitation.thanks.message}
+        </p>
+
+        <div class="mt-10 flex flex-col items-center gap-3" data-reveal="">
+          <img src="https://image.minvitation.site/assets/double-happiness-bg.webp" alt="囍" class="h-14 w-auto"/>
+          <p class="font-calligraphy text-2xl text-ink/80">
+            {invitation.groom.fullName} & {invitation.bride.fullName}
+          </p>
+          <p class="text-xs tracking-[0.4em] text-sand">{invitation.dateText}</p>
+          {invitation.hostLine && (<p class="mt-1 text-xs tracking-[0.3em] text-sand/80">{invitation.hostLine}</p>)}
+        </div>
+
+        <p class="mt-16 border-t border-champagne/60 pt-6 text-[11px] tracking-[0.3em] text-sand/70">
+          © {invitation.date.slice(0, 4)} {invitation.groom.name} & {invitation.bride.name} · 婚礼请柬
+        </p>
+
+        {/* 备案信息：个人备案需展示主办者姓名，金色细描边 + 菱形坠饰呼应印章质感 */}
+        <div class="mt-5 flex justify-center" data-reveal="">
+          <a href={invitation.icp.href} target="_blank" rel="noopener noreferrer nofollow" class="group inline-flex items-center gap-2.5 rounded-full border border-gold/25 bg-white/40 px-4 py-1.5 text-[11px] tracking-[0.16em] text-sand transition-colors duration-300 hover:border-gold/60 hover:text-primary">
+            <span aria-hidden class="h-1 w-1 rotate-45 bg-gold/70 transition-colors duration-300 group-hover:bg-primary/70"/>
+            <span class="text-ink/50 transition-colors duration-300 group-hover:text-primary/80">
+              {invitation.icp.owner}
+            </span>
+            <span aria-hidden class="h-2.5 w-px bg-gold/30"/>
+            {invitation.icp.number}
+          </a>
+        </div>
+      </div>
+    </footer>

@@ -1,0 +1,14 @@
+---
+import type { InvitationData } from '../../lib/content/invitation-schema';
+import { templateView } from '../../lib/content/template-view';
+import InvitationFrame from '../../components/shared/InvitationFrame.astro';
+import ParentsEnvelope from './components/ParentsEnvelope';
+import ParentsInvitation from './components/ParentsInvitation.astro';
+import './theme.css';
+const { data } = Astro.props as { data: InvitationData };
+const invitation = templateView(data);
+---
+<InvitationFrame data={data} theme="parents-theme">
+  {data.templateOptions.opening === 'envelope' && <ParentsEnvelope slot="cover" people={data.people} dateText={data.wedding.dateText} weekdayText={data.wedding.weekdayText} envelopeRoles={data.copy.envelopeRoles} hostSignature={data.hostSignature} client:load />}
+  <ParentsInvitation invitation={invitation} />
+</InvitationFrame>

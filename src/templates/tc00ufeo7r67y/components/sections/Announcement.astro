@@ -1,0 +1,44 @@
+---
+import type { TemplateView } from '../../../../lib/content/template-view';
+import Icon from '../../../../components/shared/Icon.astro';
+const { invitation } = Astro.props as { invitation: TemplateView };
+import PersonCard from './PersonCard.astro';
+---
+<section id="announcement" class="relative overflow-hidden bg-blush py-24 sm:py-28">
+      <div class="relative mx-auto max-w-2xl px-6 text-center">
+        {/* 装饰图钉在引言区内，且尺寸不超过引言块：卡片是半透明的，装饰图压到卡片下面会透出来 */}
+        <img src="https://image.minvitation.site/assets/qj_flower-decoration.webp" alt="" aria-hidden class="pointer-events-none absolute -left-16 top-1/2 w-48 -translate-y-1/2 opacity-70 mix-blend-multiply sm:w-56"/>
+        <img src="https://image.minvitation.site/assets/line-decoration.webp" alt="" aria-hidden class="pointer-events-none absolute -right-20 top-0 hidden h-full w-auto opacity-40 mix-blend-multiply sm:block"/>
+
+        {invitation.announcement.map((line) => (<h2 class="mt-6 text-3xl font-bold tracking-[0.3em] text-primary sm:text-4xl" data-reveal="">
+            {line}
+          </h2>))}
+
+        <div class="mx-auto mt-10 h-px w-24 bg-primary/25" data-reveal=""/>
+      </div>
+
+      <div class="relative mx-auto mt-14 max-w-3xl px-6">
+        <div class="relative grid grid-cols-2 items-stretch gap-4 sm:gap-6">
+          <PersonCard role={invitation.groom.role} fullName={invitation.groom.fullName} avatar={invitation.groom.avatar} delay={0.1}/>
+          <PersonCard role={invitation.bride.role} fullName={invitation.bride.fullName} avatar={invitation.bride.avatar} delay={0.16} mirrored/>
+
+          <div class="absolute left-1/2 top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-cream shadow-lg shadow-primary/30 sm:h-11 sm:w-11">
+            <Icon name="Heart" class="h-3.5 w-3.5 fill-current sm:h-5 sm:w-5"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto mt-12 max-w-2xl px-6 text-center">
+        <div data-reveal="">
+          {/* 父母版本：先署父亲母亲的名字，再写邀请语 */}
+          {invitation.hosts.length > 0 && (<p class="mb-5 text-sm tracking-[0.3em] text-gold">
+              {invitation.hosts.map((host) => `${host.label} ${host.name}`).join(' · ')} 敬邀
+            </p>)}
+          <p class="leading-loose text-ink/70">
+            {invitation.inviteLines.map((line) => (<span class="block">
+                {line}
+              </span>))}
+          </p>
+        </div>
+      </div>
+    </section>

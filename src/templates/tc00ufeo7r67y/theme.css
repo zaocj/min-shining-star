@@ -1,0 +1,87 @@
+[data-template="tc00ufeo7r67y"] {
+  scroll-behavior: smooth;
+}
+
+[data-template="tc00ufeo7r67y"] {
+  font-family: var(--font-serif-sc);
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 氛围：花瓣飘落（参考站同款实现，纯 CSS 驱动） ---------- */
+@keyframes ambient-fall {
+  0% {
+    transform: translate3d(0, -6vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(var(--sway, 0px), 48vh, 0) rotate(170deg);
+  }
+  100% {
+    transform: translate3d(0, 106vh, 0) rotate(340deg);
+    opacity: 0.7;
+  }
+}
+
+/* ---------- 文字扫光：渐变与扫光位移均由 CSS 驱动 ---------- */
+.text-shine {
+  background: linear-gradient(
+    110deg,
+    var(--color-champagne) 40%,
+    #fff8e7 50%,
+    var(--color-champagne) 60%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- 通用 ---------- */
+.paper-texture {
+  background-image: radial-gradient(rgba(147, 20, 52, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.35em;
+}
+
+::selection {
+  background: rgba(147, 20, 52, 0.2);
+}
+
+/* ---------- Swiper 相册 ---------- */
+.gallery-swiper .swiper-pagination-bullet {
+  background: var(--color-primary);
+  opacity: 0.25;
+}
+.gallery-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+}
+
+/* Tailwind transitions and CSS keyframes replace the former animation runtime. */
+[data-template="tc00ufeo7r67y"] .text-shine { animation: invitation-text-shine 4s linear infinite; }
+[data-template="tc00ufeo7r67y"] .envelope-seal { animation: invitation-seal-idle 2.8s ease-in-out infinite; }
+[data-template="tc00ufeo7r67y"] [data-phase="opening"] .envelope-seal { animation: invitation-seal-break .55s ease-out forwards; }
+[data-template="tc00ufeo7r67y"] [data-phase="away"] .envelope-card { animation: invitation-envelope-away .8s ease-in forwards; }
+[data-template="tc00ufeo7r67y"] [data-phase="away"] { animation: invitation-cover-away .8s ease-in forwards; }
+[data-template="tc00ufeo7r67y"] .envelope-shine { animation: invitation-button-shine 3.2s ease-in-out infinite; }
+[data-template="tc00ufeo7r67y"] .envelope-ring { animation: invitation-seal-ring .7s ease-out forwards; }
+[data-template="tc00ufeo7r67y"] .envelope-flower-fly { animation: invitation-flower-open 1.4s cubic-bezier(.16,1,.3,1) forwards; }
+[data-template="tc00ufeo7r67y"] .envelope-flower-fly[data-mirrored="true"] { --flip: -1; }
+[data-template="tc00ufeo7r67y"] .gallery-photo { opacity: .5; box-shadow: 0 8px 18px #9314341a; }
+[data-template="tc00ufeo7r67y"] .swiper-slide-active .gallery-photo { opacity: 1; box-shadow: 0 18px 36px #9314344d; }
+@keyframes invitation-text-shine { from { background-position: -200% center; } to { background-position: 200% center; } }
+@keyframes invitation-seal-idle { 0%,100% { scale: 1; filter: brightness(1); } 50% { scale: 1.06; filter: brightness(1.12); } }
+@keyframes invitation-seal-break { 0% { scale: 1; opacity: 1; } 30% { scale: 1.18; rotate: -8deg; } 100% { scale: 1.6; rotate: 18deg; opacity: 0; } }
+@keyframes invitation-envelope-away { from { transform: translateY(0) rotate(0); } to { transform: translateY(-120svh) rotate(-2deg); opacity: 0; } }
+@keyframes invitation-cover-away { 0%,35% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes invitation-button-shine { 0%,25% { transform: translateX(-180px); } 70%,100% { transform: translateX(180px); } }
+@keyframes invitation-seal-ring { from { scale: .8; opacity: .8; } to { scale: 3; opacity: 0; } }
+@keyframes invitation-flower-open { from { scale: var(--flip, 1) 1; opacity: 1; } to { scale: calc(var(--flip, 1) * 3) 3; opacity: 0; } }

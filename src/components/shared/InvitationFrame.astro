@@ -1,0 +1,10 @@
+---
+import type { InvitationData } from '../../lib/content/invitation-schema';
+import InvitationEffects from './InvitationEffects';
+const { data, theme } = Astro.props as { data: InvitationData; theme: string };
+---
+<div data-invitation-page data-template={data.templateId} data-opening={data.templateOptions.opening} data-opened={data.templateOptions.opening === 'none' ? 'true' : 'false'} class:list={['invitation-page', theme]}>
+  <slot name="cover" />
+  <main class="invitation-content" tabindex="-1"><slot /></main>
+  <InvitationEffects musicUrl={data.music.url} autoScroll={data.templateOptions.autoScroll} client:load />
+</div>

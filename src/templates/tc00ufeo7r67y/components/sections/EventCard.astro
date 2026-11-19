@@ -1,0 +1,33 @@
+---
+import Icon from '../../../../components/shared/Icon.astro';
+const { invitation, title, time, extraTime, venue, address } = Astro.props;
+---
+<div class="flex-1 rounded-2xl border border-champagne/70 bg-white/70 p-8 shadow-lg shadow-primary/5" data-reveal="">
+      <h3 class="text-center font-calligraphy text-3xl text-primary">{title}</h3>
+      <div class="mx-auto mt-4 h-px w-14 bg-primary/20"/>
+
+      <ul class="mt-6 space-y-4 text-sm">
+        <li class="flex items-start gap-3">
+          <Icon name="CalendarDays" class="mt-0.5 h-4 w-4 flex-none text-gold"/>
+          <span class="text-ink/80">
+            {invitation.dateText}
+            {invitation.lunarText && `（${invitation.lunarText}）`}
+          </span>
+        </li>
+        <li class="flex items-start gap-3">
+          <Icon name="Clock" class="mt-0.5 h-4 w-4 flex-none text-gold"/>
+          <span class="text-ink/80">
+            开席 {time}
+            {extraTime && <span class="ml-2 text-sand">迎宾 {extraTime}</span>}
+          </span>
+        </li>
+        <li class="flex items-start gap-3">
+          <Icon name="MapPin" class="mt-0.5 h-4 w-4 flex-none text-gold"/>
+          <span class="text-ink/80">
+            <span class="font-semibold text-ink">{venue}</span>
+            <br />
+            {address}
+          </span>
+        </li>
+      </ul>
+    </div>

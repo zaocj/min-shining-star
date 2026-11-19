@@ -1,0 +1,53 @@
+---
+import type { TemplateView } from '../../../../lib/content/template-view';
+import { cn } from '../../../../lib/utils';
+import Icon from '../../../../components/shared/Icon.astro';
+const { invitation } = Astro.props as { invitation: TemplateView };
+const hasHosts = invitation.hosts.length > 0;
+---
+<section class="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-primary via-primary-dark to-primary px-6 text-center">
+      {/* 背景装饰 */}
+      <img src="https://image.minvitation.site/assets/double-happiness-bg.webp" alt="" aria-hidden class="pointer-events-none absolute left-1/2 top-1/2 w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.07] brightness-0 invert"/>
+      <img src="https://image.minvitation.site/assets/ribbon-decoration.webp" alt="" aria-hidden class="pointer-events-none absolute -top-6 left-1/2 w-[150%] max-w-none -translate-x-1/2 opacity-60 mix-blend-luminosity sm:w-[110%]" data-entrance=""/>
+
+      <div class="relative z-10 flex flex-col items-center">
+        <p class="font-calligraphy text-3xl tracking-[0.3em] text-champagne sm:text-4xl" data-entrance="">
+          婚礼请柬
+        </p>
+
+        {/* 封面婚纱照：金框大图，完整显示不裁切 */}
+        <div class={cn('mt-6 w-[88vw] rounded-2xl bg-gradient-to-b from-champagne via-gold to-champagne p-[3px] shadow-[0_18px_50px_rgba(0,0,0,0.4)] sm:mt-8', hasHosts ? 'max-w-[min(400px,37svh)]' : 'max-w-[min(400px,40.5svh)]')} data-entrance="">
+          <img src="https://image.minvitation.site/myphotos/header.webp" alt="我们的婚纱照" width={1400} height={1867} fetchpriority="high" class="aspect-[3/4] w-full rounded-[13px] bg-primary-dark object-cover"/>
+        </div>
+
+        <h1 class="mt-7 whitespace-nowrap font-calligraphy text-[clamp(2rem,9vw,3.75rem)] leading-tight text-cream sm:mt-8 sm:text-6xl" data-entrance="">
+          {invitation.groom.name}
+          <span class="text-shine mx-2 font-script text-[0.85em] sm:mx-4" data-entrance="">
+            &
+          </span>
+          {invitation.bride.name}
+        </h1>
+
+        <div class="mt-6 flex flex-col items-center gap-2 sm:mt-8" data-entrance="">
+          <p class="text-lg tracking-[0.4em] text-champagne">{invitation.dateText}</p>
+          <p class="text-sm tracking-[0.3em] text-champagne/60">
+            {invitation.weekdayText}
+            {invitation.lunarText && ` · ${invitation.lunarText}`}
+          </p>
+        </div>
+
+        <div class="mt-6 flex flex-col items-center gap-2 sm:mt-8" data-entrance="">
+          <p class="text-sm tracking-[0.5em] text-cream/70">{invitation.heroTagline}</p>
+
+          {/* 父母版本：封面署上父亲母亲的名字 */}
+          {hasHosts && (<p class="text-xs tracking-[0.25em] text-champagne/80">
+              {invitation.hosts.map((host) => `${host.label} ${host.name}`).join(' · ')} 敬邀
+            </p>)}
+        </div>
+      </div>
+
+      {/* 父母版底部署名占了虚线位置，不再显示滚动提示（开启后会缓缓自动下滑） */}
+      {!hasHosts && (<a href="#announcement" aria-label="向下滚动" class="absolute bottom-8 z-10 text-champagne/70" data-entrance="">
+          <Icon name="ChevronDown" class="h-7 w-7 animate-bounce"/>
+        </a>)}
+    </section>

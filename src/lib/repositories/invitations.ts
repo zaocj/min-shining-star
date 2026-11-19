@@ -9,14 +9,18 @@ const reservedSlugs = new Set([
 ]);
 
 export function findCoupleBySlug(slug: string) {
+  const row = findPublishedInvitationBySlug(slug);
+  return row ? coupleSchema.parse(JSON.parse(row.content)) : null;
+}
+
+export function findPublishedInvitationBySlug(slug: string) {
   if (slug.length < 4 || slug.length > 48 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || reservedSlugs.has(slug)) {
     return null;
   }
 
-  const row = getDb().select({ content: invitations.content })
+  return getDb().select()
     .from(invitations)
     .where(and(eq(invitations.slug, slug), eq(invitations.status, 'published')))
     .get();
 
-  return row ? coupleSchema.parse(JSON.parse(row.content)) : null;
 }

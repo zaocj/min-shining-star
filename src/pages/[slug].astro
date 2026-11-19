@@ -1,58 +1,35 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import type { Couple } from '../lib/content/schema';
-import { findCoupleBySlug } from '../lib/repositories/invitations';
+import CoupleTemplate from '../templates/tc00ufeo7r67y/Template.astro';
+import ParentsTemplate from '../templates/th0sxg4o5vj81/Template.astro';
+import { COUPLE_TEMPLATE, PARENTS_TEMPLATE, findTemplate } from '../templates/manifest';
+import { getPageInvitation } from '../lib/services/invitations';
 
 const slug = Astro.params.slug ?? '';
-let couple: Couple | null = null;
+let result: ReturnType<typeof getPageInvitation> = null;
 let failed = false;
-
-try {
-  couple = findCoupleBySlug(slug);
-} catch (error) {
-  console.error(`[invitations] Failed to load slug: ${slug}`, error);
-  failed = true;
-}
-
-const cacheable = couple !== null && !failed &&
-  ['GET', 'HEAD'].includes(Astro.request.method) &&
-  !Astro.url.search &&
-  !Astro.request.headers.has('Cookie') &&
-  !Astro.request.headers.has('Authorization');
-
-Astro.response.headers.set('Cache-Control', cacheable
-  ? 'public, max-age=0, s-maxage=60'
-  : 'no-store');
-if (!couple) Astro.response.status = failed ? 500 : 404;
-
-const title = couple
-  ? `${couple.groom.name}与${couple.bride.name}的婚礼`
-  : failed ? '暂时无法打开请柬' : '未找到请柬';
+try { result = getPageInvitation(slug); }
+catch (error) { console.error('[invitations] Failed to load slug:', slug, error); failed = true; }
+const data = result?.kind === 'invitation' ? result.data : null;
+const couple = result?.kind === 'legacy' ? result.couple : null;
+const cacheable = result !== null && !failed && ['GET', 'HEAD'].includes(Astro.request.method) &&
+  !Astro.url.search && !Astro.request.headers.has('Cookie') && !Astro.request.headers.has('Authorization');
+Astro.response.headers.set('Cache-Control', cacheable ? 'public, max-age=0, s-maxage=60' : 'no-store');
+if (!result) Astro.response.status = failed ? 500 : 404;
+const title = couple ? `${couple.groom.name}与${couple.bride.name}的婚礼` : failed ? '暂时无法打开请柬' : '未找到请柬';
 ---
 
-<Layout title={title} noindex>
-  <main>
-    {couple ? (
-      <>
-        <h1>我们结婚啦</h1>
-        <dl>
-          <div>
-            <dt>新郎</dt>
-            <dd>{couple.groom.name}</dd>
-          </div>
-          <div>
-            <dt>新娘</dt>
-            <dd>{couple.bride.name}</dd>
-          </div>
-        </dl>
-      </>
-    ) : (
-      <>
-        <h1>{title}</h1>
-        <p>{failed ? '请稍后刷新页面重试。' : '请检查链接是否完整、正确。'}</p>
-      </>
-    )}
-  </main>
+<Layout title={title} noindex meta={data?.meta} themeColor={data ? findTemplate(data.templateId)?.themeColor : undefined}>
+  {data?.templateId === COUPLE_TEMPLATE && <CoupleTemplate data={data} />}
+  {data?.templateId === PARENTS_TEMPLATE && <ParentsTemplate data={data} />}
+  {!data && <main>
+    {couple ? <>
+      <h1>我们结婚啦</h1>
+      <dl><div><dt>新郎</dt><dd>{couple.groom.name}</dd></div><div><dt>新娘</dt><dd>{couple.bride.name}</dd></div></dl>
+    </> : <>
+      <h1>{title}</h1><p>{failed ? '请稍后刷新页面重试。' : '请检查链接是否完整、正确。'}</p>
+    </>}
+  </main>}
 </Layout>
 
 <style>

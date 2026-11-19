@@ -1,0 +1,15 @@
+---
+const { name, size = 24, class: className, ...attrs } = Astro.props;
+const paths: Record<string, string[]> = {
+  Heart: ['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z'],
+  ChevronDown: ['m6 9 6 6 6-6'],
+  ArrowDown: ['M12 5v14', 'm5 12 7 7 7-7'],
+  Navigation: ['m3 11 19-9-9 19-2-8-8-2Z'],
+  Clock: ['M12 8v4l3 2', 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0'],
+  MapPin: ['M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z', 'M15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0'],
+  CalendarDays: ['M8 2v4', 'M16 2v4', 'M3 10h18', 'M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z', 'M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01'],
+};
+---
+<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className} aria-hidden="true" {...attrs}>
+  {(paths[name] ?? []).map((d) => <path d={d} />)}
+</svg>

@@ -1,0 +1,66 @@
+---
+import type { TemplateView } from '../../../lib/content/template-view';
+import Icon from '../../../components/shared/Icon.astro';
+import ParentsGallery from './ParentsGallery';
+import CountdownTimer from '../../../components/shared/CountdownTimer';
+const { invitation } = Astro.props as { invitation: TemplateView };
+const children = invitation.people;
+const navigationUrl = `https://uri.amap.com/search?keyword=${encodeURIComponent(invitation.amap.keyword)}&city=${encodeURIComponent(invitation.amap.city)}&callnative=1`;
+---
+<article class="parents-invitation">
+      <div class="parents-page-frame" aria-hidden="true"/>
+      <header class="parents-hero">
+        <figure class="parents-hero-photo">
+          <img src="https://image.minvitation.site/myphotos/header.webp" alt={`${invitation.groom.name}与${invitation.bride.name}的婚纱合照`} width="1400" height="1867" fetchpriority="high"/>
+          <figcaption>家有<span>囍</span>事</figcaption>
+        </figure>
+        <div class="parents-hero-copy">
+          <h1 tabindex={-1}>婚礼邀请函</h1>
+          <p class="parents-hero-blessing">{invitation.announcement.map((line) => <span style={{ display: 'block' }}>{line}</span>)}</p>
+          <div class="parents-children">
+            {children.map((child) => <p><span>{child.role}</span><strong>{child.name}</strong></p>)}
+          </div>
+          <div class="parents-hero-date">
+            <p>{invitation.dateText}</p>
+            <p>{[invitation.lunarText, invitation.weekdayText].filter(Boolean).join(' · ')}</p>
+          </div>
+          <p class="parents-hero-venue">{invitation.banquet.venue}</p>
+          {invitation.hostLine && <p class="parents-host-signature">{invitation.hostLine}</p>}
+          <a class="parents-scroll-link" href="#parents-welcome">恭请光临<Icon name="ArrowDown" size={16} aria-hidden="true"/></a>
+        </div>
+      </header>
+
+      <section class="parents-welcome" id="parents-welcome">
+        <span class="parents-small-happiness" aria-hidden="true">囍</span>
+        <h2>以喜为名，诚邀您来</h2>
+        <p>亲爱的亲朋好友：</p>
+        {invitation.inviteLines.map((line) => <p class="whitespace-pre-line">{line}</p>)}
+        <div class="parents-welcome-signature"><p>{invitation.hostLine || '敬备喜宴 · 恭候光临'}</p><span>携家人 敬上</span></div>
+      </section>
+
+      <section class="parents-event" aria-labelledby="parents-event-title">
+        <div class="parents-event-heading"><h2 id="parents-event-title">喜宴之约</h2><p>佳期已许，敬候君来</p></div>
+        <div class="parents-event-details">
+          <div class="parents-event-date"><strong>{invitation.dateText}</strong><span>{[invitation.lunarText, invitation.weekdayText].filter(Boolean).join(' · ')}</span></div>
+          <dl>
+            <div><dt>迎宾入席</dt><dd>{invitation.banquet.reception.replace(/^迎宾\s*/, '')}</dd></div>
+            <div><dt>喜宴开席</dt><dd>{invitation.banquet.time}</dd></div>
+            <div><dt>婚宴地点</dt><dd>{invitation.banquet.venue}<small>{invitation.banquet.address}</small></dd></div>
+          </dl>
+          <a class="parents-navigation" href={navigationUrl}><Icon name="Navigation" size={18} aria-hidden="true"/>查看婚宴导航</a>
+        </div>
+      </section>
+
+      <ParentsGallery photos={invitation.gallery} opening={invitation.data.templateOptions.opening} client:visible />
+      {invitation.data.templateOptions.showCountdown && <CountdownTimer at={invitation.date} initialNow={Date.now()} prefix={invitation.countdownPrefix} done={invitation.countdownDone} theme="parents" client:visible />}
+
+      <footer class="parents-footer">
+        <span class="parents-small-happiness" aria-hidden="true">囍</span>
+        <h2>{invitation.thanks.title}</h2>
+        <p class="whitespace-pre-line">{invitation.thanks.message}</p>
+        {invitation.hostLine && <p class="parents-footer-hosts">{invitation.hostLine}</p>}
+        <p class="parents-footer-names">{children[0].name} · {children[1].name}</p>
+        <p class="parents-footer-date">{invitation.dateText}</p>
+        <div class="parents-legal"><span>© {invitation.date.slice(0, 4)} {invitation.icp.owner} · 婚礼请柬</span><a href={invitation.icp.href} target="_blank" rel="noopener noreferrer nofollow">{invitation.icp.number}</a></div>
+      </footer>
+    </article>

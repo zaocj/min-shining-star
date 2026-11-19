@@ -1,0 +1,62 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { buildInvitationData } from '../src/lib/content/view-model';
+import { generatedSlugSchema, importRecordSchema } from '../src/lib/content/invitation-schema';
+import { DEFAULT_MUSIC } from '../src/templates/manifest';
+import { fixture } from './fixtures';
+
+test('three slugs share two templates with independent dates, order and signatures', () => {
+  const [couple, groom, bride] = ['couple', 'groom-parents', 'bride-parents'].map((audience) => buildInvitationData(fixture(audience as 'couple' | 'groom-parents' | 'bride-parents')));
+  assert.notEqual(couple.templateId, groom.templateId);
+  assert.equal(groom.templateId, bride.templateId);
+  assert.equal(bride.people[0].label, '女儿');
+  assert.equal(bride.people[1].label, '女婿');
+  assert.equal(bride.wedding.dateText, '2027年1月2日');
+  assert.equal(bride.wedding.weekdayText, '星期六');
+  assert.equal(groom.wedding.dateText, '2027年1月1日');
+  assert.equal(groom.hostSignature, '测试父亲 · 测试母亲 敬邀');
+  assert.deepEqual(bride.hosts, []); assert.equal(bride.hostSignature, null);
+  assert.doesNotMatch(JSON.stringify(bride), /测试父亲|测试母亲/);
+  assert.equal(bride.banquet.receptionText, '09:30'); assert.equal(bride.banquet.startsText, '12:00');
+  assert.match(bride.wedding.at, /T10:00/);
+  assert.equal(bride.meta.canonicalPath, `/${bride.slug}`);
+});
+
+test('gallery is backend data: changing order, empty gallery and music off preserve meaning', () => {
+  const row = fixture(); const content = JSON.parse(row.content);
+  const second = { ...content.gallery[0], url: 'https://image.minvitation.site/myphotos/section_2.webp' };
+  content.gallery = [second, content.gallery[0]]; content.musicUrl = null;
+  row.content = JSON.stringify(content);
+  const data = buildInvitationData(row);
+  assert.equal(data.gallery[0].url, second.url); assert.equal(data.music.url, null);
+  content.gallery = []; delete content.musicUrl; row.content = JSON.stringify(content);
+  assert.deepEqual(buildInvitationData(row).gallery, []);
+  assert.equal(buildInvitationData(row).music.url, DEFAULT_MUSIC);
+});
+
+test('unsafe data, invalid versions and accidental cross-family signatures fail closed', () => {
+  for (const change of [
+    (row: ReturnType<typeof fixture>) => { row.templateVersion = 99; },
+    (row: ReturnType<typeof fixture>) => { row.contentVersion = 99; },
+    (row: ReturnType<typeof fixture>) => { row.templateKey = 'tabc123def456'; },
+    (row: ReturnType<typeof fixture>) => { const c = JSON.parse(row.content); c.gallery[0].url = 'javascript:alert(1)'; row.content = JSON.stringify(c); },
+    (row: ReturnType<typeof fixture>) => { const c = JSON.parse(row.content); c.gallery[0].width = 0; row.content = JSON.stringify(c); },
+    (row: ReturnType<typeof fixture>) => { const c = JSON.parse(row.content); c.hosts = [{ label: '父亲', name: '错误父亲' }]; row.content = JSON.stringify(c); },
+    (row: ReturnType<typeof fixture>) => { row.templateOptions = '{"showCalendar":true}'; },
+  ]) {
+    const row = fixture('bride-parents'); change(row); assert.throws(() => buildInvitationData(row));
+  }
+});
+
+test('new slugs require opaque alphanumeric identifiers', () => {
+  for (const value of ['groom-parents', 'zj-lzy-1234', 'S123abc456def', 'sabcdefghijkl', 's123456789012']) assert.equal(generatedSlugSchema.safeParse(value).success, false);
+  assert.equal(generatedSlugSchema.safeParse('sddlh4zxebmfx').success, true);
+});
+
+test('import contract matches the runtime DTO validation', () => {
+  const row = fixture(); const data = buildInvitationData(row);
+  const record = { slug: row.slug, templateId: row.templateKey, templateVersion: 1, contentVersion: 2,
+    content: JSON.parse(row.content), templateOptions: data.templateOptions, shareTitle: null, shareDescription: null, shareImage: data.meta.image, noindex: true };
+  assert.equal(importRecordSchema.parse(record).slug, row.slug);
+  assert.equal(importRecordSchema.safeParse({ ...record, templateId: 'th0sxg4o5vj81' }).success, false);
+});

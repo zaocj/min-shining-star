@@ -2,9 +2,19 @@
 
 多新人婚礼请柬平台。架构与后续开发要求见 [TECH_PLAN.md](./TECH_PLAN.md)。
 
-当前已实现最小请柬页面：访问 `/{slug}`，从现有 SQLite `invitations` 表查询已发布记录，在服务端渲染 `content.groom.name` 和 `content.bride.name`。不存在、非法 slug 或未发布记录返回 404，数据异常返回 500。首页暂保留 Astro 初始页面。
+已将 `../invitation` 迁入本项目：两套 Astro 模板、三份独立 slug 数据，只有信封、相册、倒计时、音乐/滚动和地图交互使用 React。动画为 Tailwind CSS/CSS 关键帧，相册使用 Swiper 原生 JS，无 Framer Motion 或 Swiper React 封装。
 
-本地现有示例可访问 `http://localhost:4321/lin-yu-7k2m`。不同 slug 对应不同数据库记录，页面不公开列出请柬链接。数据库须已存在且包含 `invitations` 表；本次不修改现有表和数据，也未新增迁移、录入或种子脚本。
+请柬详情接口为 `GET /api/v1/invitations/{slug}`；API 与 SSR 页面复用同一服务。数据库保存 COS 图片 URL 和元数据，浏览器直接向 `image.minvitation.site` 加载媒体。固定图片在模板中，相册由后端返回。
+
+| 本地页面 | 模板 ID |
+| --- | --- |
+| [新人版](http://localhost:4321/sddlh4zxebmfx) | `tc00ufeo7r67y` |
+| [男方父母版](http://localhost:4321/s10nxtffcpevs) | `th0sxg4o5vj81` |
+| [女方父母版](http://localhost:4321/s6jtlzuaybjru) | `th0sxg4o5vj81` |
+
+原有 `classic-red` 示例和 `lin-yu-7k2m` 等记录继续保留最小展示。新接口只支持本轮两套模板。非法、不存在或未发布 slug 返回 404，新模板数据异常返回 500。数据库须已存在且有 `invitations` 表，未重复建表或添加 DDL 迁移。
+
+接口字段见 [INVITATION_API_DESIGN.md](./INVITATION_API_DESIGN.md)，迁移结果与验证见 [MIGRATION_REPORT.md](./MIGRATION_REPORT.md)。本轮只完成本地迁移，未发布线上。
 
 ## 环境
 
@@ -36,6 +46,8 @@ npm run dev
 | `npm run dev:stop` | 停止后台服务 |
 | `npm run check` | Astro 与 TypeScript 检查 |
 | `npm run build` | 构建 standalone 服务到 `dist/` |
+| `npm test` | 构建后执行隔离数据库的单元、HTTP 与导入测试 |
+| `npm run invitation:import -- private/invitations.json` | 校验并 dry-run，默认不写数据库 |
 | `npm start` | 加载本地 `.env`，验证生产构建 |
 | `npm run start:production` | 加载 `.env.production`，运行生产构建 |
 | `npm run db:generate` | 后续添加 schema 后生成 SQL 迁移 |
@@ -85,3 +97,26 @@ npx --no-install pm2 start ecosystem.config.cjs
 Nginx、HTTPS、对象存储/CDN、日志轮转、开机自启、备份和监控需要在 M6 根据真实服务器与域名配置，本次未部署或开通外部服务。
 
 参考：[Astro Node adapter](https://docs.astro.build/en/guides/integrations-guide/node/)、[Astro 环境变量](https://docs.astro.build/en/guides/environment-variables/)、[Astro 样式](https://docs.astro.build/en/guides/styling/)、[Drizzle 配置](https://orm.drizzle.team/docs/drizzle-config-file)。
+
+## 请柬资料导入
+
+真实三份资料位于本机被 Git 和 Docker 忽略的 `private/invitations.json`，每份含 12 张照片。不要依赖该文件随 Git 或镜像传输；其他环境需自行提供经校验的源 JSON 和已有数据库。
+
+```sh
+# 仅读取与校验
+npm run invitation:import -- private/invitations.json
+# 自动备份，再以事务导入；新记录默认 draft，已有状态保持
+npm run invitation:import -- private/invitations.json --apply
+# 明确发布
+npm run invitation:import -- private/invitations.json --apply --publish
+```
+
+导入工具使用 Node 的 TypeScript 类型擦除，生产安装无需 tsx；不修改表结构。备份存于数据库所在目录的 `backups/`。重复导入按固定 slug 更新，同一 slug 若属于另一对新人或其他模板则拒绝覆盖；更新后页面共享缓存最多等待约 60 秒。
+
+新记录的 `content_version` 为 2，API 的 `schemaVersion` 为 1；模板版本独立为 1。模板 ID 为 `t` 加 12 位随机字母数字，slug 为 `s` 加 12 位随机字母数字，生成后保持稳定。
+
+## 可选内嵌地图
+
+`PUBLIC_AMAP_KEY` 与 `PUBLIC_AMAP_SECURITY_CODE` 是高德 Web JS SDK 的公开浏览器配置，构建时注入；不出现在请柬 JSON。修改后需重新构建，域名须符合高德配置。留空仍显示场地和导航按钮；SDK 或地理编码失败会退回导航提示卡。
+
+Docker 构建可通过同名 `--build-arg` 传入这两个公开配置；独立 Node 构建从本地环境读取。应用域名来自 `SITE_URL`，与固定媒体域名分别管理。

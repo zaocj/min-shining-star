@@ -1,0 +1,28 @@
+---
+import type { TemplateView } from '../../../../lib/content/template-view';
+import Icon from '../../../../components/shared/Icon.astro';
+const { invitation } = Astro.props as { invitation: TemplateView };
+import SectionHeading from './SectionHeading.astro';
+import EventCard from './EventCard.astro';
+import VenueMap from './VenueMap';
+---
+<section class="relative overflow-hidden bg-blush py-24 sm:py-28">
+      <img src="https://image.minvitation.site/assets/ribbon-decoration.webp" alt="" aria-hidden class="pointer-events-none absolute -bottom-10 left-1/2 w-[120%] max-w-none -translate-x-1/2 opacity-25 mix-blend-multiply"/>
+
+      <div class="relative mx-auto max-w-4xl px-6">
+        <SectionHeading title="典礼与婚宴"/>
+
+        <EventCard invitation={invitation} title={invitation.banquet.title} time={invitation.banquet.time} extraTime={invitation.banquet.reception} venue={invitation.banquet.venue} address={invitation.banquet.address} delay={0}/>
+
+        {/* 地图：callnative=1 在手机上会唤起高德 APP，未安装则打开网页版 */}
+        <div class="mt-10" data-reveal="">
+          <VenueMap keyword={invitation.amap.keyword} city={invitation.amap.city} client:visible />
+          <div class="mt-5 text-center">
+            <a href={`https://uri.amap.com/search?keyword=${encodeURIComponent(invitation.amap.keyword)}&city=${encodeURIComponent(invitation.amap.city)}&callnative=1`} target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 rounded-full bg-primary px-10 py-3 text-sm tracking-[0.3em] text-cream shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95">
+              <Icon name="Navigation" class="h-4 w-4"/>
+              高德地图导航
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>

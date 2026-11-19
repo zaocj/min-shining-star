@@ -1,0 +1,28 @@
+---
+import type { InvitationData } from '../../lib/content/invitation-schema';
+import { templateView } from '../../lib/content/template-view';
+import InvitationFrame from '../../components/shared/InvitationFrame.astro';
+import Envelope from './components/envelope/Envelope';
+import Hero from './components/sections/Hero.astro';
+import Announcement from './components/sections/Announcement.astro';
+import Gallery from './components/sections/Gallery';
+import SectionHeading from './components/sections/SectionHeading.astro';
+import Events from './components/sections/Events.astro';
+import Countdown from './components/sections/Countdown.astro';
+import Thanks from './components/sections/Thanks.astro';
+import './theme.css';
+const { data } = Astro.props as { data: InvitationData };
+const invitation = templateView(data);
+---
+<InvitationFrame data={data} theme="couple-theme min-h-screen bg-cream font-serif-sc text-ink">
+  {data.templateOptions.opening === 'envelope' && <Envelope slot="cover" people={data.people} dateText={data.wedding.dateText} hostSignature={data.hostSignature} client:load />}
+  <Hero invitation={invitation} />
+  <Announcement invitation={invitation} />
+  {data.gallery.length > 0 && <section class="relative overflow-hidden bg-cream py-24 sm:py-28">
+    <div class="mx-auto max-w-5xl px-6"><SectionHeading title="婚礼相册" /></div>
+    <Gallery photos={data.gallery} opening={data.templateOptions.opening} client:visible />
+  </section>}
+  <Events invitation={invitation} />
+  {(data.templateOptions.showCountdown || data.templateOptions.showCalendar) && <Countdown invitation={invitation} />}
+  <Thanks invitation={invitation} />
+</InvitationFrame>

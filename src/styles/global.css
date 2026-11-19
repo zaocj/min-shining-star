@@ -1,1 +1,47 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme inline {
+  /* silk-ribbon-dark-red 设计 token */
+  --color-primary: #931434;
+  --color-primary-dark: #750016;
+  --color-wine: #913b51;
+  --color-cream: #fefbf4;
+  --color-blush: #f8eef1;
+  --color-blush-deep: #efd9df;
+  --color-petal: #e8c4ce;
+  --color-champagne: #f3dfc3;
+  --color-gold: #c9a25e;
+  --color-ink: #2f2a26;
+  --color-sand: #a08b74;
+
+  --font-serif-sc: 'Invitation Serif', 'Songti SC', 'SimSun', serif;
+  --font-calligraphy: 'Invitation Calligraphy', 'Songti SC', serif;
+  --font-script: 'Invitation Calligraphy', cursive;
+}
+
+
+@font-face { font-family: 'Invitation Serif'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('/fonts/parents-serif.woff2') format('woff2'); }
+@font-face { font-family: 'Invitation Calligraphy'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/parents-calligraphy.woff2') format('woff2'); }
+html { scroll-behavior: smooth; }
+.invitation-page { -webkit-font-smoothing: antialiased; }
+.invitation-page :is(button, a) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.invitation-page :is(button, a):focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+.invitation-page button { cursor: pointer; }
+.invitation-page .music-toggle { bottom: max(24px, env(safe-area-inset-bottom)); right: max(24px, env(safe-area-inset-right)); }
+.invitation-page:not([data-enhanced="true"]) .invitation-cover { display: none; }
+.invitation-page:not([data-enhanced="true"]) main [style] { opacity: 1 !important; transform: none !important; }
+.invitation-page:not([data-enhanced="true"]) main .text-shine { color: var(--color-champagne); }
+@media (prefers-reduced-motion: reduce) {
+ html { scroll-behavior: auto; }
+ .invitation-page *, .invitation-page *::before, .invitation-page *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+.invitation-content:focus { outline: none; }
+.invitation-content h1:focus { outline: none; }
+.invitation-page [data-reveal], .invitation-page [data-entrance] { @apply transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none; }
+.invitation-page[data-enhanced="true"] [data-reveal]:not([data-visible="true"]) { @apply translate-y-6 opacity-0; }
+.invitation-page[data-enhanced="true"][data-opened="false"] [data-entrance] { @apply translate-y-8 opacity-0; }
+.invitation-page[data-opened="true"] .invitation-cover { display: none; }
+@media (prefers-reduced-motion: reduce) {
+ .invitation-page [data-reveal], .invitation-page [data-entrance] { opacity: 1 !important; transform: none !important; }
+}
