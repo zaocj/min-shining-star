@@ -66,9 +66,18 @@
 ## 后续发布前核对
 
 - iOS Safari、Android 真机及微信内的音乐、触摸和地图跳转尚未实际测试，本次手机尺寸验证是桌面 Chrome 视口检查。
-- Dockerfile 已补入生产可用的导入脚本及必需的纯 TypeScript schema/metadata，并提供可选高德公开配置 build args；本轮未执行 Docker 镜像构建或线上发布。
+- Dockerfile 已补入生产可用的导入脚本及必需的纯 TypeScript schema/metadata，并提供可选高德公开配置 build args。后续修复并验证了 linux/amd64 镜像构建及容器运行（见下节）；尚未线上发布。
 - 高德 Web JS SDK 配置是构建期公开值，生产需确认域名白名单；未配置或加载/定位失败时保留导航入口。
 - 新人与父母模板的固定首屏、头像仍为当前婚礼照片；本轮不扩展为任意新人的动态封面功能。
 - 页面可能共享缓存 60 秒，导入后应考虑该窗口再核对；媒体 CDN、防盗链和缓存策略未在本轮修改。
 
 相关文档：[接口设计](./INVITATION_API_DESIGN.md)、[迁移计划](./INVITATION_MIGRATION_PLAN.md)、[运行与导入说明](./README.md)。
+
+## Docker 构建问题修复与实测（2026-11-19）
+
+此前只验证本地 Node 构建，Docker 使用更新的 Node 24 镜像后，npm 11.19.1 校验发现锁文件缺少两个可选 WASM peer 依赖记录：@emnapi/core@2.0.0-beta.2、@emnapi/runtime@2.0.0-beta.2。已在隔离 Linux 环境补全锁文件，并在 Docker 构建阶段固定 npm 11.6.1，与 packageManager 一致。
+
+- 本地 npm 11.6.1 和 Linux npm 11.19.1 对修复后的锁文件均通过 ci dry-run。
+- 实际执行 `docker buildx build --platform linux/amd64 --load --progress=plain -t shining-star:latest .` 成功，镜像内 npm ci、52 文件类型检查、Astro 构建均通过。
+- 最终生产镜像以默认 node 用户在隔离的虚构测试数据库中完成资料导入与在线备份，JSON API 和 SSR 页面均返回 200，人物顺序、场地及 canonical 正确。
+- 镜像已导出至 `/tmp/shining-star-image.tar.gz`；测试容器已停止，没有修改服务器或线上数据库。

@@ -209,6 +209,10 @@ sudo sqlite3 /var/lib/invitation/app.db ".backup '/var/backups/shining-star/app-
 
 ## 11. 构建失败时
 
+若在 `RUN npm ci` 阶段出现 `EUSAGE`，并提示锁文件缺少 `@emnapi/core@2.0.0-beta.2`、`@emnapi/runtime@2.0.0-beta.2`，是此前锁文件未包含完整的可选 WASM peer 依赖记录。不同 npm 版本的校验结果可能不同：本地 npm 11.6.1 可通过，更新后的 Node 24 基础镜像自带 npm 11.19.1 会拒绝安装。
+
+仓库已补全锁文件，并在 Docker 构建阶段固定 npm 11.6.1，与 `package.json` 的 `packageManager` 一致。使用修复后的 `Dockerfile` 和 `package-lock.json` 重新执行第 6 步构建即可；镜像中继续使用 `npm ci`，依赖版本不在构建时临时改写。
+
 若在 `apt-get install` 阶段报 `Unable to fetch some archives`，先看前面的 `Failed to fetch` 原因。`Unable to connect`、超时或 DNS 错误表示构建容器访问软件源失败；应检查本机网络及 Docker Desktop 的代理配置后重试。宿主机是 Mac，构建镜像内部是 Debian，不需要在 Mac 执行 `apt-get`。
 
 在本地项目根目录重新执行（按服务器架构调整 platform）：

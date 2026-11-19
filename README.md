@@ -120,3 +120,10 @@ npm run invitation:import -- private/invitations.json --apply --publish
 `PUBLIC_AMAP_KEY` 与 `PUBLIC_AMAP_SECURITY_CODE` 是高德 Web JS SDK 的公开浏览器配置，构建时注入；不出现在请柬 JSON。修改后需重新构建，域名须符合高德配置。留空仍显示场地和导航按钮；SDK 或地理编码失败会退回导航提示卡。
 
 Docker 构建可通过同名 `--build-arg` 传入这两个公开配置；独立 Node 构建从本地环境读取。应用域名来自 `SITE_URL`，与固定媒体域名分别管理。
+
+
+<!-- 以后仅更新代码、没有资料变更时，服务器只需执行： -->
+
+cd /srv/shining-star
+sudo docker load -i shining-star-image.tar.gz &&
+sudo docker compose up -d --force-recreate app

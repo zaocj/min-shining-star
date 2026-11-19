@@ -6,6 +6,8 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
+# 与 package.json 的 packageManager 保持一致，避免基础镜像更新改变依赖解析规则。
+RUN npm install --global npm@11.6.1
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
