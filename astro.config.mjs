@@ -18,6 +18,12 @@ export default defineConfig({
       PORT: envField.number({ context: 'server', access: 'secret', default: 4321, int: true, min: 1, max: 65535 }),
       SITE_URL: envField.string({ context: 'server', access: 'secret', url: true }),
       DATABASE_PATH: envField.string({ context: 'server', access: 'secret', min: 1 }),
+      GALLERY_SOURCE: envField.enum({ context: 'server', access: 'secret', values: ['database', 'cos'], default: 'database' }),
+      COS_SECRET_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      COS_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      COS_BUCKET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      COS_REGION: envField.string({ context: 'server', access: 'secret', optional: true }),
+      COS_PUBLIC_BASE_URL: envField.string({ context: 'server', access: 'secret', default: 'https://image.minvitation.site', url: true }),
       NODE_ENV: envField.enum({ context: 'server', access: 'secret', values: ['development', 'production', 'test'], default: 'development' }),
       PUBLIC_AMAP_KEY: envField.string({ context: 'client', access: 'public', default: '' }),
       PUBLIC_AMAP_SECURITY_CODE: envField.string({ context: 'client', access: 'public', default: '' }),
@@ -25,6 +31,6 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
-    ssr: { external: ['better-sqlite3'] },
+    ssr: { external: ['better-sqlite3', 'cos-nodejs-sdk-v5'] },
   }
 });

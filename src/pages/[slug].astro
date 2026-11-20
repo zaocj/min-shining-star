@@ -6,9 +6,9 @@ import { COUPLE_TEMPLATE, PARENTS_TEMPLATE, findTemplate } from '../templates/ma
 import { getPageInvitation } from '../lib/services/invitations';
 
 const slug = Astro.params.slug ?? '';
-let result: ReturnType<typeof getPageInvitation> = null;
+let result: Awaited<ReturnType<typeof getPageInvitation>> = null;
 let failed = false;
-try { result = getPageInvitation(slug); }
+try { result = await getPageInvitation(slug); }
 catch (error) { console.error('[invitations] Failed to load slug:', slug, error); failed = true; }
 const data = result?.kind === 'invitation' ? result.data : null;
 const couple = result?.kind === 'legacy' ? result.couple : null;

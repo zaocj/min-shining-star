@@ -47,7 +47,7 @@ export default function ParentsGallery({ photos, opening }: Props) {
       <div className="parents-gallery-photo">
         <div className="swiper parents-gallery-swiper" ref={container}>
           <div className="swiper-wrapper">{photos.map((photo) => <div key={photo.url} className="swiper-slide">
-            <Image src={photo.url} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" draggable={false} />
+            <Image src={photo.url} alt={photo.alt} width={photo.width} height={photo.height} className="aspect-[3/4] w-full" loading="lazy" draggable={false} />
           </div>)}</div>
         </div>
       </div>

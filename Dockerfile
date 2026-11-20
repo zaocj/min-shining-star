@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 
@@ -12,10 +11,15 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 
-# 构建占位值；真实配置由 Compose 在运行时注入。
+# 地图公开配置在构建时注入；其余服务端配置由 Compose 在运行时注入。
 ARG PUBLIC_AMAP_KEY=""
 ARG PUBLIC_AMAP_SECURITY_CODE=""
-RUN SITE_URL=https://build.invalid DATABASE_PATH=/data/app.db npm run check \
+ARG DISABLE_EMBEDDED_MAP=0
+RUN if [ "$DISABLE_EMBEDDED_MAP" != "1" ]; then \
+      test -n "$PUBLIC_AMAP_KEY" && test -n "$PUBLIC_AMAP_SECURITY_CODE" \
+        || { echo 'Missing AMap build configuration. Use npm run docker:build, or explicitly disable the embedded map.' >&2; exit 1; }; \
+    fi \
+    && SITE_URL=https://build.invalid DATABASE_PATH=/data/app.db npm run check \
     && SITE_URL=https://build.invalid DATABASE_PATH=/data/app.db npm run build
 RUN npm prune --omit=dev
 

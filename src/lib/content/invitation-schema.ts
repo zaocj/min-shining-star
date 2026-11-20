@@ -20,6 +20,7 @@ export const photoSchema = z.object({
   height: z.number().int().positive(),
   alt: text,
 });
+const galleryPhotoSchema = photoSchema.partial({ width: true, height: true });
 const copySchema = z.object({
   envelopeRoles: text.nullable(), heroTagline: text,
   announcement: z.array(text).min(1), inviteLines: z.array(text).min(1),
@@ -41,7 +42,7 @@ export const storedContentSchema = z.object({
     receptionAt: at, startsAt: at, venue: text, address: text, navigation,
   })).length(1),
   copy: copySchema,
-  gallery: z.array(photoSchema).max(200),
+  gallery: z.array(galleryPhotoSchema).max(200).default([]),
   shareImage: photoSchema.optional(),
   musicUrl: httpsUrlSchema.nullable().optional(),
   legal: z.object({ icpNumber: text, owner: text, url: httpsUrlSchema }),
@@ -81,7 +82,7 @@ export const invitationDataSchema = z.object({
   hosts: z.array(host), hostSignature: text.nullable(), familyLabel: text.nullable(),
   wedding: z.object({ at, timezone: z.literal('Asia/Shanghai'), dateText: text, weekdayText: text, lunarText: text.nullable() }),
   banquet: z.object({ title: text, receptionAt: at, startsAt: at, receptionText: text, startsText: text, venue: text, address: text, navigation }),
-  copy: copySchema, gallery: z.array(photoSchema), music: z.object({ url: httpsUrlSchema.nullable() }),
+  copy: copySchema, gallery: z.array(galleryPhotoSchema), music: z.object({ url: httpsUrlSchema.nullable() }),
   templateOptions: templateOptionsSchema,
   meta: z.object({ title: text, description: text, canonicalPath: text, image: photoSchema, noindex: z.boolean() }),
   legal: z.object({ icpNumber: text, owner: text, url: httpsUrlSchema }),

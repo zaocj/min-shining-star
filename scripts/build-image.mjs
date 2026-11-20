@@ -31,7 +31,8 @@ export function main(args = process.argv.slice(2)) {
   const directory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const environment = mapBuildEnvironment(directory, process.env, values['without-map']);
   const command = ['buildx', 'build', '--platform', values.platform, '--load', '--progress=plain',
-    '--build-arg', 'PUBLIC_AMAP_KEY', '--build-arg', 'PUBLIC_AMAP_SECURITY_CODE', '-t', values.tag, '.'];
+    '--build-arg', 'PUBLIC_AMAP_KEY', '--build-arg', 'PUBLIC_AMAP_SECURITY_CODE',
+    '--build-arg', `DISABLE_EMBEDDED_MAP=${values['without-map'] ? '1' : '0'}`, '-t', values.tag, '.'];
   console.log(`构建 ${values.tag}（${values.platform}）`);
   console.log(values['without-map'] ? '地图：已明确关闭内嵌地图，仅保留导航提示卡。' : '地图：已读取 Key 与安全校验配置，将在构建时注入。');
   if (values['dry-run']) { console.log('dry-run 完成，未执行 Docker 构建。'); return 0; }

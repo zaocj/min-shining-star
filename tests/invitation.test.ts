@@ -29,9 +29,13 @@ test('gallery is backend data: changing order, empty gallery and music off prese
   row.content = JSON.stringify(content);
   const data = buildInvitationData(row);
   assert.equal(data.gallery[0].url, second.url); assert.equal(data.music.url, null);
+  content.gallery = [{ url: second.url, alt: '不含宽高的相册照片' }]; row.content = JSON.stringify(content);
+  assert.deepEqual(buildInvitationData(row).gallery, content.gallery);
   content.gallery = []; delete content.musicUrl; row.content = JSON.stringify(content);
   assert.deepEqual(buildInvitationData(row).gallery, []);
   assert.equal(buildInvitationData(row).music.url, DEFAULT_MUSIC);
+  delete content.gallery; row.content = JSON.stringify(content);
+  assert.deepEqual(buildInvitationData(row).gallery, []);
 });
 
 test('unsafe data, invalid versions and accidental cross-family signatures fail closed', () => {
@@ -59,4 +63,5 @@ test('import contract matches the runtime DTO validation', () => {
     content: JSON.parse(row.content), templateOptions: data.templateOptions, shareTitle: null, shareDescription: null, shareImage: data.meta.image, noindex: true };
   assert.equal(importRecordSchema.parse(record).slug, row.slug);
   assert.equal(importRecordSchema.safeParse({ ...record, templateId: 'th0sxg4o5vj81' }).success, false);
+  assert.equal(importRecordSchema.safeParse({ ...record, shareImage: { url: data.meta.image.url, alt: '分享封面' } }).success, false);
 });

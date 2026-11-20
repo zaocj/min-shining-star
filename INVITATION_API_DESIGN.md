@@ -87,6 +87,8 @@ Astro 模板接收完整 data，React 交互组件只接收所需字段
 | `meta` | PageMeta | 服务端 head 及分享所需信息 |
 | `legal` | Legal | 页脚展示的备案信息 |
 
+运行时相册来源由服务端 `GALLERY_SOURCE` 决定：默认 `database` 使用 `content.gallery`；设置为 `cos` 时，后端分页列出 `usersphotos/{slug}/` 下的图片（含子目录），按文件名自然数字顺序生成同样的 `gallery` 结构，前端契约保持不变。空目录返回 `[]`，COS 配置、权限或网络错误返回 500，不回退数据库旧照片。配置与缓存详见 [README](./README.md#按-slug-读取-cos-相册)。
+
 ### 3.2 人物与署名
 
 | 字段 | 类型 | 说明 |
@@ -140,7 +142,7 @@ Astro 模板接收完整 data，React 交互组件只接收所需字段
 | `copy.countdownDone` | string | 婚期已过文案 |
 | `copy.thanks.title` / `message` | string | 致谢标题、正文；正文可含换行 |
 | `gallery[].url` | string | COS 自定义域名的绝对 HTTPS 图片 URL |
-| `gallery[].width` / `height` | integer | 真实图片宽高，正整数 |
+| `gallery[].width` / `height` | integer（可选） | 提供时为真实图片宽高、正整数；COS 动态模式不返回，页面由 CSS 固定 `3:4` 比例展示 |
 | `gallery[].alt` | string | 图片描述 |
 | `music.url` | string 或 null | 绝对 HTTPS MP3 URL；null 隐藏音乐组件 |
 | `templateOptions.opening` | string | `envelope` 或 `none` |
@@ -417,7 +419,7 @@ GET /{slug} → Astro 页面 ────────────────┘
 | `content.weddingAt`、`lunarText` | wedding，其他日期展示值服务端生成 |
 | `content.events` 中本期唯一婚宴项 | banquet，迎宾与开席展示值服务端生成 |
 | `content.copy` | copy，可合并模板通用默认文案；不得填入另一 slug 的专属内容 |
-| `content.gallery` | gallery |
+| `content.gallery` | database 模式的 gallery；可省略（默认 `[]`），cos 模式由 `usersphotos/{slug}/` 的图片替换 |
 | `content.musicUrl` | music.url，服务端解析默认曲目或显式关闭 |
 | `template_options` | templateOptions，服务端校验并补齐默认值 |
 | `share_title` / `share_description` / `share_image_url`、`noindex` | meta；未配置的文本服务端按本条数据生成 |

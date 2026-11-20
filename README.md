@@ -4,7 +4,7 @@
 
 已将 `../invitation` 迁入本项目：两套 Astro 模板、三份独立 slug 数据，只有信封、相册、倒计时、音乐/滚动和地图交互使用 React。动画为 Tailwind CSS/CSS 关键帧，相册使用 Swiper 原生 JS，无 Framer Motion 或 Swiper React 封装。
 
-请柬详情接口为 `GET /api/v1/invitations/{slug}`；API 与 SSR 页面复用同一服务。数据库保存 COS 图片 URL 和元数据，浏览器直接向 `image.minvitation.site` 加载媒体。固定图片在模板中，相册由后端返回。
+请柬详情接口为 `GET /api/v1/invitations/{slug}`；API 与 SSR 页面复用同一服务。相册默认读取数据库，也可配置为按 slug 动态列出 COS 图片；浏览器直接向媒体域名加载图片。固定图片在模板中，相册由后端返回。
 
 生产域名为 `https://minvitation.site`，直接访问服务器；完整路径见 [ONLINE_LINKS.md](./ONLINE_LINKS.md)，域名、证书、DNS 与备份记录见 [DOMAIN_SWITCH.md](./DOMAIN_SWITCH.md)。
 
@@ -71,6 +71,37 @@ npm run dev
 
 `.env` 不固定 `NODE_ENV`，避免影响 Astro 构建。生产变量示例见 `.env.production.example`。环境文件、数据库及其 WAL/SHM 文件、备份、`private/` 中的新人数据均已忽略；示例环境文件可提交。
 
+## 按 slug 读取 COS 相册
+
+服务端使用腾讯云官方 `cos-nodejs-sdk-v5`。在 `.env`（本地）或服务器 `.env.production` 中配置：
+
+```dotenv
+GALLERY_SOURCE=cos
+COS_SECRET_ID=你的子账号SecretId
+COS_SECRET_KEY=你的子账号SecretKey
+COS_BUCKET=你的桶名-1250000000
+COS_REGION=ap-guangzhou
+COS_PUBLIC_BASE_URL=https://image.minvitation.site
+```
+
+`COS_BUCKET` 必须包含 APPID 后缀，地域须与桶一致，`COS_PUBLIC_BASE_URL` 为指向这个桶的 HTTPS 公开媒体域名，只填域名、不带路径。这些配置在服务端运行时读取，不注入浏览器或镜像构建参数。服务端密钥只需要列举目标桶（`GetBucket`）的权限。图片由浏览器直接读取，需确保媒体域名允许访问；当前实现不生成私有图片签名 URL。
+
+例如女方父母版的图片上传到以下对象键，**开头不带 `/`**：
+
+```text
+usersphotos/s6jtlzuaybjru/1.webp
+usersphotos/s6jtlzuaybjru/2.webp
+usersphotos/s6jtlzuaybjru/10.webp
+```
+
+访问 `/s6jtlzuaybjru` 或 `/api/v1/invitations/s6jtlzuaybjru` 时，服务端先确认请柬已发布，再分页列出 `usersphotos/s6jtlzuaybjru/` 下的图片（包含子目录），按文件名数字顺序展示，如 1、2、10。支持 JPG/JPEG、PNG、WebP、GIF、AVIF，跳过目录占位、空文件和其他格式。其他 slug 使用各自的同名目录，不会共享或继承图片。
+
+服务端只列举对象，不下载图片或读取图片头；相册条目包含 `url`、`alt`，宽高为可选字段，页面由 CSS 按固定 `3:4` 比例展示。图片加载失败时显示占位提示。目录列表按 slug 缓存 60 秒；空目录返回 `gallery: []`，隐藏相册。COS 权限、网络或配置错误按现有接口返回 500，不自动混入数据库旧照片。页面还可能有 Nginx 的 60 秒共享缓存，上传、删除或改名后最长约两分钟反映到页面；同名覆盖时浏览器/CDN 的图片缓存需单独刷新。
+
+启用后，`data.gallery` 来自 COS，数据库中的 `content.gallery` 可设为 `[]` 或省略。姓名、婚宴、文案等仍从数据库读取，首屏照片、头像及装饰素材仍使用原模板地址。设回 `GALLERY_SOURCE=database` 可使用原有数据库相册。
+
+部署新镜像后修改服务器环境配置，执行 `sudo docker compose up -d --force-recreate app` 生效；本地修改配置后重启开发服务。仅更改 COS 中的照片无需重新导入数据库或构建应用。
+
 ## 数据库工具
 
 `drizzle.config.ts` 使用 Node 原生能力加载 `.env`，指定 SQLite 方言、`src/lib/db/schema.ts` 和 `drizzle/` 迁移目录。schema 已映射本地现有 `invitations` 表；仓库尚未包含初始化迁移，空数据库不能直接运行此页面。
@@ -122,6 +153,8 @@ npm run invitation:import -- private/invitations.json --apply --publish
 `PUBLIC_AMAP_KEY` 与 `PUBLIC_AMAP_SECURITY_CODE` 是高德 Web JS SDK 的公开浏览器配置，构建时注入；不出现在请柬 JSON。修改后需重新构建，域名须符合高德配置。留空仍显示场地和导航按钮；SDK 或地理编码失败会退回导航提示卡。
 
 推荐使用 `npm run docker:build`，自动从本地 `.env` / `.env.production` 读取这两个配置并通过同名 build args 注入；缺少时拒绝构建，避免上线后只剩导航提示卡。运行 `npm run docker:build -- --dry-run` 可仅检查配置，`--platform linux/arm64` 可指定 ARM 服务器，明确关闭内嵌地图时使用 `--without-map`。独立 Node 构建从本地环境读取。应用域名来自 `SITE_URL`，与固定媒体域名分别管理。
+
+Dockerfile 同样校验这两个构建参数，直接执行未传参数的 `docker build` 会失败。仅修改服务器运行时 `.env.production` 无法补回已经被编译成空值的地图配置，需重新构建并更新镜像。
 
 
 <!-- 以后仅更新代码、没有资料变更时，服务器只需执行： -->

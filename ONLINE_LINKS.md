@@ -57,11 +57,14 @@
 | 首屏照片 | `myphotos/header.webp` |
 | 新郎头像 | `myphotos/groom_avatar.webp` |
 | 新娘头像 | `myphotos/bride_avatar.webp` |
-| 相册照片 | `myphotos/section_1.webp` 至 `myphotos/section_12.webp` |
+| 原数据库模式相册照片 | `myphotos/section_1.webp` 至 `myphotos/section_12.webp` |
+| COS 动态模式相册照片 | `usersphotos/{slug}/` 下所有支持的图片，含子目录 |
 | 分享封面 | `myphotos/share-cover.jpg` |
 | 背景音乐 | `auido/jintianwoyaojiageini-96k.mp3` |
 
 完整媒体 URL 为“媒体域名 + `/` + 对象路径”，例如：[第一张相册照片](https://image.minvitation.site/myphotos/section_1.webp)。音频目录实际拼写为 **`auido`**。
+
+相册模式由服务端 `GALLERY_SOURCE` 决定，默认 `database`。设置为 `cos` 后，例如 `s6jtlzuaybjru` 将读取 `usersphotos/s6jtlzuaybjru/`，对象键开头不带 `/`；详情接口仍使用 `data.gallery`。环境配置、权限和缓存说明见 [README](./README.md#按-slug-读取-cos-相册)。
 
 ## 6. 路由规则
 
