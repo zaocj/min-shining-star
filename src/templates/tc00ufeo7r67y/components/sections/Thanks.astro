@@ -28,7 +28,7 @@ const { invitation } = Astro.props as { invitation: TemplateView };
         </p>
 
         {/* 备案信息：个人备案需展示主办者姓名，金色细描边 + 菱形坠饰呼应印章质感 */}
-        <div class="mt-5 flex justify-center" data-reveal="">
+        {invitation.icp && <div class="mt-5 flex justify-center" data-reveal="">
           <a href={invitation.icp.href} target="_blank" rel="noopener noreferrer nofollow" class="group inline-flex items-center gap-2.5 rounded-full border border-gold/25 bg-white/40 px-4 py-1.5 text-[11px] tracking-[0.16em] text-sand transition-colors duration-300 hover:border-gold/60 hover:text-primary">
             <span aria-hidden class="h-1 w-1 rotate-45 bg-gold/70 transition-colors duration-300 group-hover:bg-primary/70"/>
             <span class="text-ink/50 transition-colors duration-300 group-hover:text-primary/80">
@@ -37,6 +37,6 @@ const { invitation } = Astro.props as { invitation: TemplateView };
             <span aria-hidden class="h-2.5 w-px bg-gold/30"/>
             {invitation.icp.number}
           </a>
-        </div>
+        </div>}
       </div>
     </footer>

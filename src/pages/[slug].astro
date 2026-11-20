@@ -19,7 +19,7 @@ if (!result) Astro.response.status = failed ? 500 : 404;
 const title = couple ? `${couple.groom.name}与${couple.bride.name}的婚礼` : failed ? '暂时无法打开请柬' : '未找到请柬';
 ---
 
-<Layout title={title} noindex meta={data?.meta} themeColor={data ? findTemplate(data.templateId)?.themeColor : undefined}>
+<Layout title={title} noindex meta={data?.meta} coverImage={data?.media?.cover.url} themeColor={data ? findTemplate(data.templateId)?.themeColor : undefined}>
   {data?.templateId === COUPLE_TEMPLATE && <CoupleTemplate data={data} />}
   {data?.templateId === PARENTS_TEMPLATE && <ParentsTemplate data={data} />}
   {!data && <main>

@@ -1,6 +1,6 @@
 # Shining Star 访问路径汇总
 
-> 更新日期：2026-11-19。
+> 更新日期：2026-11-20。
 > 生产域名（2026-11-19 从旧域名切换）：`https://minvitation.site`。
 > 本地开发地址：`http://127.0.0.1:4321`。
 
@@ -41,6 +41,10 @@
 | 新人版 | [打开页面](http://127.0.0.1:4321/sddlh4zxebmfx) | [查看 JSON](http://127.0.0.1:4321/api/v1/invitations/sddlh4zxebmfx) |
 | 男方父母版 | [打开页面](http://127.0.0.1:4321/s10nxtffcpevs) | [查看 JSON](http://127.0.0.1:4321/api/v1/invitations/s10nxtffcpevs) |
 | 女方父母版 | [打开页面](http://127.0.0.1:4321/s6jtlzuaybjru) | [查看 JSON](http://127.0.0.1:4321/api/v1/invitations/s6jtlzuaybjru) |
+| 新相册·新人版 | [打开页面](http://127.0.0.1:4321/s6c1dad309f95) | [查看 JSON](http://127.0.0.1:4321/api/v1/invitations/s6c1dad309f95) |
+| 新相册·男方父母版 | [打开页面](http://127.0.0.1:4321/s944ae4dc54c0) | [查看 JSON](http://127.0.0.1:4321/api/v1/invitations/s944ae4dc54c0) |
+
+2026-11-20 新增的两份请柬仅已写入本地数据库，分别使用 `tc00ufeo7r67y` 和 `th0sxg4o5vj81`，共用相册 `photo3c9ac0161333`，对应 `usersphotos/photo3c9ac0161333/`。两份均使用虚构新人“林予安、许知夏”，父母为“林明远、沈清和”；示例婚期为 2027-05-16，场地选用[苏州 W 酒店官网](https://www.marriott.com.cn/hotels/szvwh-w-suzhou/overview/)公开的苏州中心7号楼地址。姓名、邀请语、分享资料与图片均已替换为独立演示内容，示例页不显示原个人备案信息。资料已保存到 `private/invitations.json` 和单独的 `private/invitations.photo3c9ac0161333.json`。本地仍为 database 相册模式，新记录的旧照片数组留空；配置并启用 COS 模式后加载关联相册。尚未发布到线上。
 
 启动本地服务：在项目目录执行 `npm run dev`。
 
@@ -58,13 +62,13 @@
 | 新郎头像 | `myphotos/groom_avatar.webp` |
 | 新娘头像 | `myphotos/bride_avatar.webp` |
 | 原数据库模式相册照片 | `myphotos/section_1.webp` 至 `myphotos/section_12.webp` |
-| COS 动态模式相册照片 | `usersphotos/{slug}/` 下所有支持的图片，含子目录 |
+| COS 动态模式相册照片 | `usersphotos/{album_slug}/` 下所有支持的图片，含子目录；相册 slug 为 `photo` 加随机字符串 |
 | 分享封面 | `myphotos/share-cover.jpg` |
 | 背景音乐 | `auido/jintianwoyaojiageini-96k.mp3` |
 
 完整媒体 URL 为“媒体域名 + `/` + 对象路径”，例如：[第一张相册照片](https://image.minvitation.site/myphotos/section_1.webp)。音频目录实际拼写为 **`auido`**。
 
-相册模式由服务端 `GALLERY_SOURCE` 决定，默认 `database`。设置为 `cos` 后，例如 `s6jtlzuaybjru` 将读取 `usersphotos/s6jtlzuaybjru/`，对象键开头不带 `/`；详情接口仍使用 `data.gallery`。环境配置、权限和缓存说明见 [README](./README.md#按-slug-读取-cos-相册)。
+相册模式由服务端 `GALLERY_SOURCE` 决定，默认 `database`。设置为 `cos` 后，先按请柬 slug 查询数据库 `album_slug`，再读取对应目录；例如 `s6jtlzuaybjru` 关联 `photoabc123def456`，则读取 `usersphotos/photoabc123def456/`。对象键开头不带 `/`；详情接口通过 `data.albumSlug` 返回关联，通过 `data.gallery` 返回图片。不同请柬可以共用相册。环境配置、迁移、权限和缓存说明见 [README](./README.md#按-slug-读取-cos-相册)。
 
 ## 6. 路由规则
 

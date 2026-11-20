@@ -17,7 +17,7 @@ const hasHosts = invitation.hosts.length > 0;
 
         {/* 封面婚纱照：金框大图，完整显示不裁切 */}
         <div class={cn('mt-6 w-[88vw] rounded-2xl bg-gradient-to-b from-champagne via-gold to-champagne p-[3px] shadow-[0_18px_50px_rgba(0,0,0,0.4)] sm:mt-8', hasHosts ? 'max-w-[min(400px,37svh)]' : 'max-w-[min(400px,40.5svh)]')} data-entrance="">
-          <img src="https://image.minvitation.site/myphotos/header.webp" alt="我们的婚纱照" width={1400} height={1867} fetchpriority="high" class="aspect-[3/4] w-full rounded-[13px] bg-primary-dark object-cover"/>
+          <img src={invitation.cover.url} alt={invitation.cover.alt} width={invitation.cover.width} height={invitation.cover.height} fetchpriority="high" class="aspect-[3/4] w-full rounded-[13px] bg-primary-dark object-cover"/>
         </div>
 
         <h1 class="mt-7 whitespace-nowrap font-calligraphy text-[clamp(2rem,9vw,3.75rem)] leading-tight text-cream sm:mt-8 sm:text-6xl" data-entrance="">

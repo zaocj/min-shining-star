@@ -82,12 +82,14 @@ Astro 模板接收完整 data，React 交互组件只接收所需字段
 | `banquet` | Banquet | 本期单场婚宴的时间、场地、地址和导航 |
 | `copy` | Copy | 本条请柬的差异文案 |
 | `gallery` | Photo[] | 新人的婚纱相册，按数组顺序展示；无照片为 `[]` |
+| `albumSlug` | string 或 null | 独立相册标识：`photo` 加 12 位随机小写字母或数字；多个请柬可共用，null 表示未关联 |
 | `music` | Music | 已解析默认值后的音乐配置；关闭时 `url: null` |
 | `templateOptions` | TemplateOptions | 已解析默认值后的展示和交互选项 |
 | `meta` | PageMeta | 服务端 head 及分享所需信息 |
-| `legal` | Legal | 页脚展示的备案信息 |
+| `legal` | Legal 或 null | 页脚展示的备案信息；null 隐藏备案区块，用于独立演示资料 |
+| `media` | object（可选） | 独立封面 `cover: Photo` 及头像 `groomAvatarUrl`、`brideAvatarUrl`，覆盖模板默认素材 |
 
-运行时相册来源由服务端 `GALLERY_SOURCE` 决定：默认 `database` 使用 `content.gallery`；设置为 `cos` 时，后端分页列出 `usersphotos/{slug}/` 下的图片（含子目录），按文件名自然数字顺序生成同样的 `gallery` 结构，前端契约保持不变。空目录返回 `[]`，COS 配置、权限或网络错误返回 500，不回退数据库旧照片。配置与缓存详见 [README](./README.md#按-slug-读取-cos-相册)。
+运行时相册来源由服务端 `GALLERY_SOURCE` 决定：默认 `database` 使用 `content.gallery`；设置为 `cos` 时，后端读取该请柬的 `album_slug`，分页列出 `usersphotos/{album_slug}/` 下的图片（含子目录），按文件名自然数字顺序生成 `gallery`。无相册关联或空目录返回 `[]`，不回退到请柬 slug 目录；COS 配置、权限或网络错误返回 500，不回退数据库旧照片。共享相册的请柬复用 60 秒缓存。配置与迁移详见 [README](./README.md#按-slug-读取-cos-相册)。
 
 ### 3.2 人物与署名
 
@@ -165,7 +167,7 @@ meta 的 canonicalPath 由后端根据 slug 生成。Astro layout 使用部署�
 
 ## 4. 三份完整响应示例
 
-以下展示三个接口各自独立返回的完整结构，无需前端合并“公共字段”。为便于阅读，相册每份仅展示两张；正式导入时返回完整 12 张的有序数组，不做分页。示例两张图尺寸已从旧本地源文件读取，COS 对象尺寸在导入时再核对。
+以下展示 database 模式下三个接口各自独立返回的完整结构，无需前端合并“公共字段”。为便于阅读，相册每份仅展示两张；正式资料保留完整有序数组，不做分页。示例保留原照片 URL 与尺寸；cos 模式改为 `albumSlug` 对应目录的图片 URL，并省略宽高。
 
 ### 4.1 新人版
 
@@ -176,6 +178,7 @@ meta 的 canonicalPath 由后端根据 slug 生成。Astro layout 使用部署�
   "data": {
     "schemaVersion": 1,
     "slug": "sddlh4zxebmfx",
+    "albumSlug": "photoabc123def456",
     "templateId": "tc00ufeo7r67y",
     "templateVersion": 1,
     "audience": "couple",
@@ -239,6 +242,7 @@ meta 的 canonicalPath 由后端根据 slug 生成。Astro layout 使用部署�
   "data": {
     "schemaVersion": 1,
     "slug": "s10nxtffcpevs",
+    "albumSlug": "photoabc123def456",
     "templateId": "th0sxg4o5vj81",
     "templateVersion": 1,
     "audience": "groom-parents",
@@ -305,6 +309,7 @@ meta 的 canonicalPath 由后端根据 slug 生成。Astro layout 使用部署�
   "data": {
     "schemaVersion": 1,
     "slug": "s6jtlzuaybjru",
+    "albumSlug": "photoabc123def456",
     "templateId": "th0sxg4o5vj81",
     "templateVersion": 1,
     "audience": "bride-parents",
@@ -410,6 +415,7 @@ GET /{slug} → Astro 页面 ────────────────┘
 | 数据库来源 | API data |
 | --- | --- |
 | `slug` | `slug` |
+| `album_slug` | `albumSlug`；独立相册标识，可为 NULL；不是请柬 slug |
 | `template_key` | `templateId`，新模板存储 `t` 开头的随机 ID；只改接口命名，不要求重命名现有列 |
 | `template_version` | `templateVersion` |
 | `content_version` | 新请柬为 `2`；内部 content 校验/转换版本，不等同于对外 schemaVersion |
@@ -419,7 +425,7 @@ GET /{slug} → Astro 页面 ────────────────┘
 | `content.weddingAt`、`lunarText` | wedding，其他日期展示值服务端生成 |
 | `content.events` 中本期唯一婚宴项 | banquet，迎宾与开席展示值服务端生成 |
 | `content.copy` | copy，可合并模板通用默认文案；不得填入另一 slug 的专属内容 |
-| `content.gallery` | database 模式的 gallery；可省略（默认 `[]`），cos 模式由 `usersphotos/{slug}/` 的图片替换 |
+| `content.gallery` | database 模式的 gallery；可省略（默认 `[]`），cos 模式由 `usersphotos/{album_slug}/` 的图片替换 |
 | `content.musicUrl` | music.url，服务端解析默认曲目或显式关闭 |
 | `template_options` | templateOptions，服务端校验并补齐默认值 |
 | `share_title` / `share_description` / `share_image_url`、`noindex` | meta；未配置的文本服务端按本条数据生成 |
@@ -427,7 +433,7 @@ GET /{slug} → Astro 页面 ────────────────┘
 
 schemaVersion 是公开响应结构版本；数据库 content_version 是内部存储版本；templateVersion 是布局兼容版本，三者独立演进。
 
-三个完整记录可由一份私有资料生成并在事务中导入，共享相册只重复保存元数据，不重复上传 COS 文件。任何记录都可独立更新婚宴、文案和发布时间；每次读取只根据该 slug 查询，不能临时读取另一 slug 填字段。
+三个完整记录可由一份私有资料生成并在事务中导入，共享相册时保存相同的 `album_slug`，不重复上传 COS 文件。导入记录顶层的 `albumSlug` 映射到此列：省略时保留旧关联（新记录为 NULL），显式 null 清除。任何记录都可独立更新婚宴、文案和发布时间；每次读取只根据该 slug 查询，不能临时读取另一 slug 填字段。已有数据库通过 `npm run db:migrate:album -- --apply` 备份并执行增量迁移。
 
 已有 `classic-red` 示例记录仍走原最小页面兼容路径，不映射为这两个新模板。v1 接口本期仅支持两种新模板；请求到已有但不在本接口范围内的模板记录，返回与未找到相同的 404，保留旧页面访问；若新模板记录的版本或配置损坏则返回 500。
 
@@ -459,7 +465,7 @@ schemaVersion 是公开响应结构版本；数据库 content_version 是内部�
 - 不暴露 preview_token、数据库路径、数据库主键、云密钥、SQL 或错误堆栈。
 - templateId 与 audience 合法组合为：新人模板只接 couple；父母模板接两种 parents。人物称呼和顺序由后端校验一致性。
 - URL 使用绝对 HTTPS；本次真实新记录的照片、分享图与音频均使用已确认的 `image.minvitation.site` 域名。保留桶内真实的 `myphotos/`、`auido/` 路径。
-- gallery 顺序直接按数组输出，禁止请求时列桶、按字符串文件名排序或拼出 12 个 URL 让前端猜。
+- database 模式的 gallery 直接按数组输出；COS 模式按数据库 album_slug 分页列举并以数字文件名自然排序，不通过请柬 slug 猜目录或拼出固定 12 个 URL。
 - 不返回 HTML 或任意 CSS；templateOptions 是受限字段集合，不接受任意脚本/样式配置。
 - 不新增模糊的 null/缺省语义：本契约列出的成功字段全部存在，前端无需合并私有硬编码数据。
 
@@ -472,7 +478,7 @@ schemaVersion 是公开响应结构版本；数据库 content_version 是内部�
 - [ ] 女方响应任何字段中均不出现男方父母姓名，且女儿在先、日期和场地正确。
 - [ ] API 与 SSR 共享同一服务和 schema，不出现一份返回 1 月 1 日、另一份显示 1 月 2 日的双重配置。
 - [ ] 原始 HTML 输出对应 slug 的 meta 和正文；React 交互组件的水合数据与初始 HTML 一致。
-- [ ] gallery 来自数据库中的完整有序数组；固定模板图片继续直接使用 COS。
+- [ ] gallery 根据 GALLERY_SOURCE 来自数据库数组或 album_slug 对应的 COS 相册；固定模板图片继续直接使用 COS。
 - [ ] 非法/不存在/未发布 slug 404，损坏新记录 500；页面与 API 各自遵守缓存规则。
 - [ ] 在隔离数据中验证三个响应、空相册、单图、无署名、音乐关闭、未知版本及异常状态。
 

@@ -14,7 +14,7 @@
 - 三份独立 invitations 记录共用两套模板。新 slug 为 `s` 加 12 位随机字母数字，template_key / templateId 为 `t` 加 12 位随机字母数字；已发布旧示例保留兼容。
 - 实现 `GET /api/v1/invitations/{slug}`，与页面共享服务。公开接口 no-store；页面继续实际代码的 `max-age=0, s-maxage=60` 条件缓存。
 - 新存储 content_version 为 2，API schemaVersion 为 1；schemaVersion、内容版本与模板版本独立管理。
-- 媒体使用现有 COS 自定义域名，数据库只保存相册 URL/尺寸/描述；固定模板图片直接引用 COS。
+- 媒体使用现有 COS 自定义域名，数据库 `album_slug` 保存独立相册标识（`photo` 加 12 位随机字母数字）；COS 模式读取 `usersphotos/{album_slug}/`，多个请柬可共享相册。database 模式兼容原图片数组；固定模板图片直接引用 COS。
 - 当前 React 共享客户端运行时 gzip 约 66KB，超出历史单页约 50KB 的目标；仅交互 islands 加载运行时，原生 Swiper 延迟到相册可见时加载，实际体积见验证记录。
 
 ## 1. 项目目标
@@ -114,6 +114,7 @@
 |---|---|---|
 | `id` | 整数主键 | 自增 |
 | `slug` | 文本，唯一，非空 | URL 标识 |
+| `album_slug` | 文本，可空 | 独立相册标识，`photo` 加 12 位随机字母数字；可被多个请柬引用 |
 | `status` | 文本，非空 | `draft`、`published`、`archived` |
 | `template_key` | 文本，非空 | 例如 `classic-red`、`minimal-white` |
 | `template_version` | 整数，非空 | 模板大版本，见 7.4 |

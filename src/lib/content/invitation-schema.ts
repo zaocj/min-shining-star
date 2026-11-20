@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { findTemplate } from '../../templates/manifest.ts';
 
 const text = z.string().trim().min(1).max(2000);
+export const albumSlugSchema = z.string().regex(/^photo[a-z0-9]{12}$/, '相册 slug 必须是 photo 加 12 位小写字母或数字');
 export const generatedSlugSchema = z.string().regex(/^s[a-z0-9]{12}$/)
   .refine((v) => /[a-z]/.test(v.slice(1)) && /[0-9]/.test(v.slice(1)), '随机部分须包含字母和数字');
 export const templateIdSchema = z.string().regex(/^t[a-z0-9]{12}$/)
@@ -21,6 +22,7 @@ export const photoSchema = z.object({
   alt: text,
 });
 const galleryPhotoSchema = photoSchema.partial({ width: true, height: true });
+const mediaSchema = z.object({ cover: photoSchema, groomAvatarUrl: httpsUrlSchema, brideAvatarUrl: httpsUrlSchema });
 const copySchema = z.object({
   envelopeRoles: text.nullable(), heroTagline: text,
   announcement: z.array(text).min(1), inviteLines: z.array(text).min(1),
@@ -44,8 +46,9 @@ export const storedContentSchema = z.object({
   copy: copySchema,
   gallery: z.array(galleryPhotoSchema).max(200).default([]),
   shareImage: photoSchema.optional(),
+  media: mediaSchema.optional(),
   musicUrl: httpsUrlSchema.nullable().optional(),
-  legal: z.object({ icpNumber: text, owner: text, url: httpsUrlSchema }),
+  legal: z.object({ icpNumber: text, owner: text, url: httpsUrlSchema }).nullable(),
 }).superRefine((value, ctx) => {
   if (value.audience === 'bride-parents' && value.hosts.length) {
     ctx.addIssue({ code: 'custom', path: ['hosts'], message: '女方父母版不公开父母姓名' });
@@ -77,19 +80,22 @@ export const templateOptionsSchema = z.object({
 
 export const invitationDataSchema = z.object({
   schemaVersion: z.literal(1), slug: generatedSlugSchema,
+  albumSlug: albumSlugSchema.nullable(),
   templateId: templateIdSchema, templateVersion: z.literal(1), audience,
   people: z.array(z.object({ id: personId, name: text, label: text })).length(2),
   hosts: z.array(host), hostSignature: text.nullable(), familyLabel: text.nullable(),
   wedding: z.object({ at, timezone: z.literal('Asia/Shanghai'), dateText: text, weekdayText: text, lunarText: text.nullable() }),
   banquet: z.object({ title: text, receptionAt: at, startsAt: at, receptionText: text, startsText: text, venue: text, address: text, navigation }),
   copy: copySchema, gallery: z.array(galleryPhotoSchema), music: z.object({ url: httpsUrlSchema.nullable() }),
+  media: mediaSchema.optional(),
   templateOptions: templateOptionsSchema,
   meta: z.object({ title: text, description: text, canonicalPath: text, image: photoSchema, noindex: z.boolean() }),
-  legal: z.object({ icpNumber: text, owner: text, url: httpsUrlSchema }),
+  legal: z.object({ icpNumber: text, owner: text, url: httpsUrlSchema }).nullable(),
 });
 
 export const importRecordSchema = z.object({
   slug: generatedSlugSchema, templateId: templateIdSchema,
+  albumSlug: albumSlugSchema.nullable().optional(),
   templateVersion: z.literal(1), contentVersion: z.literal(2),
   content: storedContentSchema, templateOptions: templateOptionsSchema,
   shareTitle: text.nullable(), shareDescription: text.nullable(),

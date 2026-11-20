@@ -7,13 +7,14 @@ import { spawnSync } from 'node:child_process';
 import Database from 'better-sqlite3';
 import { fixture, fixtureTable } from './fixtures';
 import { buildInvitationData } from '../src/lib/content/view-model';
+import type { ImportRecord } from '../src/lib/content/invitation-schema';
 
 test('import dry-run, transaction update, idempotence, backup and collision guard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'shining-star-import-'));
   const databasePath = join(dir, 'test.db'); const jsonFile = join(dir, 'invitations.json');
   const db = new Database(databasePath); db.exec(fixtureTable);
   const row = fixture(); const data = buildInvitationData(row);
-  const record = { slug: row.slug, templateId: row.templateKey, templateVersion: 1, contentVersion: 2,
+  const record: ImportRecord = { slug: row.slug, albumSlug: row.albumSlug, templateId: row.templateKey, templateVersion: 1, contentVersion: 2,
     content: JSON.parse(row.content), templateOptions: data.templateOptions, shareTitle: null, shareDescription: null,
     shareImage: { ...data.meta.image, url: 'https://image.minvitation.site/custom-cover.jpg', width: 1200, height: 630 }, noindex: true };
   const run = (...flags: string[]) => spawnSync(process.execPath, ['--experimental-strip-types', resolve('scripts/invitation-import.ts'), jsonFile, ...flags], {
@@ -25,8 +26,19 @@ test('import dry-run, transaction update, idempotence, backup and collision guar
     assert.equal(run().status, 0); assert.equal(count(), 0);
     const imported = run('--apply', '--publish'); assert.equal(imported.status, 0, imported.stderr); assert.match(imported.stdout, /备份/); assert.equal(count(), 1);
     assert.equal(run('--apply', '--publish').status, 0); assert.equal(count(), 1);
-    const stored = db.prepare('SELECT status,content FROM invitations').get() as { status: string; content: string };
+    const stored = db.prepare('SELECT status,content,album_slug FROM invitations').get() as { status: string; content: string; album_slug: string | null };
     assert.equal(stored.status, 'published'); assert.equal(JSON.parse(stored.content).shareImage.width, 1200);
+    assert.equal(stored.album_slug, row.albumSlug);
+    delete record.albumSlug; writeFileSync(jsonFile, JSON.stringify([record]));
+    assert.equal(run('--apply').status, 0);
+    assert.equal((db.prepare('SELECT album_slug FROM invitations').get() as { album_slug: string | null }).album_slug, row.albumSlug);
+    record.albumSlug = null; writeFileSync(jsonFile, JSON.stringify([record]));
+    assert.equal(run('--apply').status, 0);
+    assert.equal((db.prepare('SELECT album_slug FROM invitations').get() as { album_slug: string | null }).album_slug, null);
+    record.albumSlug = '../invalid'; writeFileSync(jsonFile, JSON.stringify([record]));
+    assert.notEqual(run('--apply').status, 0);
+    assert.equal((db.prepare('SELECT album_slug FROM invitations').get() as { album_slug: string | null }).album_slug, null);
+    delete record.albumSlug;
     record.content.groom.name = '另一个新人'; writeFileSync(jsonFile, JSON.stringify([record]));
     assert.notEqual(run('--apply').status, 0); assert.equal(count(), 1);
     assert.equal(JSON.parse((db.prepare('SELECT content FROM invitations').get() as { content: string }).content).groom.name, '测试新郎');

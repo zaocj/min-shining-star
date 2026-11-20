@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createCosGallery, type GalleryStorage } from '../src/lib/repositories/cos-gallery';
 
 const config = { secretId: 'test-id', secretKey: 'test-key', bucket: 'photos-1250000000', region: 'ap-guangzhou', publicBaseUrl: 'https://images.example.com/' };
-const slug = 's6jtlzuaybjru';
+const slug = 'photoabc123def456';
 const prefix = `usersphotos/${slug}/`;
 const object = (name: string) => ({ Key: prefix + name, Size: '100' });
 
@@ -38,7 +38,7 @@ test('cache deduplicates concurrent loads and refreshes the gallery after expiry
   time = 60_001; await gallery(slug); assert.equal(listings, 2);
   name = '2.png'; time += 60_001;
   assert.ok((await gallery(slug))[0].url.endsWith('/2.png'));
-  await gallery('s10nxtffcpevs'); assert.equal(listings, 4);
+  await gallery('photodef456abc123'); assert.equal(listings, 4);
 });
 
 test('empty folders stay empty; invalid slugs never reach COS', async () => {
@@ -47,7 +47,7 @@ test('empty folders stay empty; invalid slugs never reach COS', async () => {
     async list() { calls++; return { Contents: [], IsTruncated: 'false' }; },
   });
   assert.deepEqual(await gallery(slug), []);
-  for (const invalid of ['../secret', 's6jtlzuaybjru/other', 'unknown']) await assert.rejects(gallery(invalid));
+  for (const invalid of ['../secret', 's6jtlzuaybjru', `${slug}/other`, 'unknown', 'phoptabc123def456']) await assert.rejects(gallery(invalid));
   assert.equal(calls, 1);
 });
 

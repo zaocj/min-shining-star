@@ -1,10 +1,11 @@
 import { sql } from 'drizzle-orm';
 import { check, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
-// 对应现有 invitations 表，不改变数据库结构。
+// 已有表的相册字段迁移见 drizzle/manual/add-album-slug.sql。
 export const invitations = sqliteTable('invitations', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   slug: text('slug').notNull(),
+  albumSlug: text('album_slug'),
   status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
   templateKey: text('template_key').notNull(),
   templateVersion: integer('template_version').notNull().default(1),

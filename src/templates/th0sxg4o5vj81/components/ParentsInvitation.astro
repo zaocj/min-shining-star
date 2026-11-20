@@ -11,7 +11,7 @@ const navigationUrl = `https://uri.amap.com/search?keyword=${encodeURIComponent(
       <div class="parents-page-frame" aria-hidden="true"/>
       <header class="parents-hero">
         <figure class="parents-hero-photo">
-          <img src="https://image.minvitation.site/myphotos/header.webp" alt={`${invitation.groom.name}与${invitation.bride.name}的婚纱合照`} width="1400" height="1867" fetchpriority="high"/>
+          <img src={invitation.cover.url} alt={invitation.cover.alt} width={invitation.cover.width} height={invitation.cover.height} fetchpriority="high"/>
           <figcaption>家有<span>囍</span>事</figcaption>
         </figure>
         <div class="parents-hero-copy">
@@ -61,6 +61,6 @@ const navigationUrl = `https://uri.amap.com/search?keyword=${encodeURIComponent(
         {invitation.hostLine && <p class="parents-footer-hosts">{invitation.hostLine}</p>}
         <p class="parents-footer-names">{children[0].name} · {children[1].name}</p>
         <p class="parents-footer-date">{invitation.dateText}</p>
-        <div class="parents-legal"><span>© {invitation.date.slice(0, 4)} {invitation.icp.owner} · 婚礼请柬</span><a href={invitation.icp.href} target="_blank" rel="noopener noreferrer nofollow">{invitation.icp.number}</a></div>
+        <div class="parents-legal"><span>© {invitation.date.slice(0, 4)} {invitation.icp?.owner ?? `${invitation.groom.name} & ${invitation.bride.name}`} · 婚礼请柬</span>{invitation.icp && <a href={invitation.icp.href} target="_blank" rel="noopener noreferrer nofollow">{invitation.icp.number}</a>}</div>
       </footer>
     </article>

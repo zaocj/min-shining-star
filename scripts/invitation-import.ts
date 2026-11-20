@@ -20,12 +20,12 @@ async function main() {
   const db = new Database(resolve(process.env.DATABASE_PATH), { fileMustExist: true });
   try {
     db.pragma('busy_timeout = 5000');
-    const required = ['slug', 'template_key', 'content_version', 'share_image_url', 'published_at'];
+    const required = ['slug', 'album_slug', 'template_key', 'content_version', 'share_image_url', 'published_at'];
     const columns = db.pragma('table_info(invitations)') as Array<{ name: string }>;
-    if (required.some((name) => !columns.some((column) => column.name === name))) throw new Error('数据库表结构不匹配；请先核对迁移历史');
-    const select = db.prepare('SELECT template_key, content, status FROM invitations WHERE slug = ?');
+    if (required.some((name) => !columns.some((column) => column.name === name))) throw new Error('数据库表结构不匹配；请先核对迁移历史并执行 npm run db:migrate:album -- --apply');
+    const select = db.prepare('SELECT template_key, content, status, album_slug FROM invitations WHERE slug = ?');
     for (const record of records) {
-      const old = select.get(record.slug) as { template_key: string; content: string; status: string } | undefined;
+      const old = select.get(record.slug) as { template_key: string; content: string; status: string; album_slug: string | null } | undefined;
       if (old) {
         const content = JSON.parse(old.content);
         if (old.template_key !== record.templateId || content.groom?.name !== record.content.groom.name || content.bride?.name !== record.content.bride.name || content.audience !== record.content.audience) {
@@ -34,7 +34,8 @@ async function main() {
       }
       // Validate the exact DTO that both the API and SSR will return before any writes.
       buildInvitationData({
-        slug: record.slug, templateKey: record.templateId, templateVersion: record.templateVersion, contentVersion: record.contentVersion,
+        slug: record.slug, albumSlug: record.albumSlug === undefined ? old?.album_slug ?? null : record.albumSlug,
+        templateKey: record.templateId, templateVersion: record.templateVersion, contentVersion: record.contentVersion,
         content: JSON.stringify({ ...record.content, shareImage: record.shareImage }), templateOptions: JSON.stringify(record.templateOptions),
         shareTitle: record.shareTitle, shareDescription: record.shareDescription, shareImageUrl: record.shareImage.url, noindex: record.noindex,
       });
@@ -46,9 +47,10 @@ async function main() {
     const backup = resolve(backupDirectory, `before-import-${Date.now()}.db`);
     await db.backup(backup);
     const upsert = db.prepare(`INSERT INTO invitations
-      (slug,status,template_key,template_version,content_version,content,template_options,share_title,share_description,share_image_url,noindex,wedding_date,published_at,created_at,updated_at)
-      VALUES (@slug,@status,@templateId,@templateVersion,@contentVersion,@content,@options,@shareTitle,@shareDescription,@shareImageUrl,@noindex,@weddingDate,@publishedAt,@now,@now)
+      (slug,album_slug,status,template_key,template_version,content_version,content,template_options,share_title,share_description,share_image_url,noindex,wedding_date,published_at,created_at,updated_at)
+      VALUES (@slug,@albumSlug,@status,@templateId,@templateVersion,@contentVersion,@content,@options,@shareTitle,@shareDescription,@shareImageUrl,@noindex,@weddingDate,@publishedAt,@now,@now)
       ON CONFLICT(slug) DO UPDATE SET
+      album_slug=CASE WHEN @hasAlbumSlug=1 THEN excluded.album_slug ELSE invitations.album_slug END,
       status=excluded.status,template_key=excluded.template_key,template_version=excluded.template_version,content_version=excluded.content_version,
       content=excluded.content,template_options=excluded.template_options,share_title=excluded.share_title,share_description=excluded.share_description,
       share_image_url=excluded.share_image_url,noindex=excluded.noindex,wedding_date=excluded.wedding_date,
@@ -60,6 +62,7 @@ async function main() {
         const status = flags.has('--publish') ? 'published' : old?.status ?? 'draft';
         upsert.run({
           slug: record.slug, status, templateId: record.templateId, templateVersion: record.templateVersion, contentVersion: record.contentVersion,
+          albumSlug: record.albumSlug ?? null, hasAlbumSlug: record.albumSlug === undefined ? 0 : 1,
           content: JSON.stringify({ ...record.content, shareImage: record.shareImage }), options: JSON.stringify(record.templateOptions), shareTitle: record.shareTitle,
           shareDescription: record.shareDescription, shareImageUrl: record.shareImage.url, noindex: record.noindex ? 1 : 0,
           weddingDate: new Intl.DateTimeFormat('en-CA', { timeZone: record.content.timezone }).format(new Date(record.content.weddingAt)),

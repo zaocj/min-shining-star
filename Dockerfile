@@ -30,6 +30,8 @@ COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/scripts/invitation-import.ts ./scripts/invitation-import.ts
+COPY --from=build --chown=node:node /app/scripts/albums.ts ./scripts/albums.ts
+COPY --from=build --chown=node:node /app/drizzle/manual ./drizzle/manual
 COPY --from=build --chown=node:node /app/src/lib/content/invitation-schema.ts /app/src/lib/content/view-model.ts ./src/lib/content/
 COPY --from=build --chown=node:node /app/src/templates/manifest.ts ./src/templates/manifest.ts
 USER node

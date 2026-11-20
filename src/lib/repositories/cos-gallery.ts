@@ -1,5 +1,5 @@
 import COS from 'cos-nodejs-sdk-v5';
-import { generatedSlugSchema, httpsUrlSchema, type InvitationData } from '../content/invitation-schema';
+import { albumSlugSchema, httpsUrlSchema, type InvitationData } from '../content/invitation-schema';
 
 type Photo = InvitationData['gallery'][number];
 type ObjectEntry = { Key: string; Size: string };
@@ -34,8 +34,8 @@ export function createCosGallery(config: Config, storage?: GalleryStorage, now =
   const cache = new Map<string, { photos: Photo[]; expires: number }>();
   const pending = new Map<string, Promise<Photo[]>>();
 
-  async function load(slug: string) {
-    const prefix = `usersphotos/${slug}/`;
+  async function load(albumSlug: string) {
+    const prefix = `usersphotos/${albumSlug}/`;
     const objects = new Map<string, ObjectEntry>();
     const seenMarkers = new Set<string>();
     let marker: string | undefined;
@@ -57,19 +57,19 @@ export function createCosGallery(config: Config, storage?: GalleryStorage, now =
     }));
   }
 
-  return async (slug: string): Promise<Photo[]> => {
-    generatedSlugSchema.parse(slug);
-    const cached = cache.get(slug);
+  return async (albumSlug: string): Promise<Photo[]> => {
+    albumSlugSchema.parse(albumSlug);
+    const cached = cache.get(albumSlug);
     if (cached && cached.expires > now()) return cached.photos;
-    const inFlight = pending.get(slug);
+    const inFlight = pending.get(albumSlug);
     if (inFlight) return inFlight;
-    const request = load(slug).then((photos) => {
-      cache.delete(slug);
-      cache.set(slug, { photos, expires: now() + cacheTtl });
+    const request = load(albumSlug).then((photos) => {
+      cache.delete(albumSlug);
+      cache.set(albumSlug, { photos, expires: now() + cacheTtl });
       if (cache.size > 100) cache.delete(cache.keys().next().value!);
       return photos;
-    }).finally(() => { pending.delete(slug); });
-    pending.set(slug, request);
+    }).finally(() => { pending.delete(albumSlug); });
+    pending.set(albumSlug, request);
     return request;
   };
 }

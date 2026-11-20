@@ -6,6 +6,7 @@ export function fixture(audience: 'couple' | 'groom-parents' | 'bride-parents' =
   const date = bride ? '2027-01-02' : '2027-01-01';
   return {
     slug: bride ? 's6jtlzuaybjru' : parent ? 's10nxtffcpevs' : 'sddlh4zxebmfx',
+    albumSlug: parent ? 'photoabc123def456' : 'photoerr123abc456',
     templateKey: parent ? PARENTS_TEMPLATE : COUPLE_TEMPLATE, templateVersion: 1, contentVersion: 2,
     content: JSON.stringify({
       audience, groom: { name: '测试新郎' }, bride: { name: '测试新娘' },
@@ -24,7 +25,7 @@ export function fixture(audience: 'couple' | 'groom-parents' | 'bride-parents' =
   };
 }
 export const fixtureTable = `CREATE TABLE invitations (
- id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'draft',
+ id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, album_slug TEXT, status TEXT NOT NULL DEFAULT 'draft',
  template_key TEXT NOT NULL, template_version INTEGER NOT NULL DEFAULT 1, content_version INTEGER NOT NULL DEFAULT 1,
  content TEXT NOT NULL, template_options TEXT, share_title TEXT, share_description TEXT, share_image_url TEXT,
  noindex INTEGER NOT NULL DEFAULT 1, preview_token TEXT, wedding_date TEXT NOT NULL,

@@ -2,7 +2,7 @@ import { invitationDataSchema, storedContentSchema, templateOptionsSchema } from
 import { DEFAULT_MUSIC, findTemplate, SHARE_IMAGE } from '../../templates/manifest.ts';
 
 export interface InvitationRow {
-  slug: string; templateKey: string; templateVersion: number; contentVersion: number;
+  slug: string; albumSlug: string | null; templateKey: string; templateVersion: number; contentVersion: number;
   content: string; templateOptions: string | null;
   shareTitle: string | null; shareDescription: string | null; shareImageUrl: string | null; noindex: boolean;
 }
@@ -30,11 +30,11 @@ export function buildInvitationData(row: InvitationRow) {
   const title = row.shareTitle ?? `${people.map((p) => p.name).join(' & ')} · 婚礼请柬`;
   const description = row.shareDescription ?? `${people.map((p) => `${p.label}${p.name}`).join('与')}诚邀您于${dateText}莅临${event.venue}，${clock(event.receptionAt)}迎宾，${clock(event.startsAt)}开席。`;
   return invitationDataSchema.parse({
-    schemaVersion: 1, slug: row.slug, templateId: row.templateKey, templateVersion: row.templateVersion,
+    schemaVersion: 1, slug: row.slug, albumSlug: row.albumSlug, templateId: row.templateKey, templateVersion: row.templateVersion,
     audience: content.audience, people, hosts: content.hosts, hostSignature, familyLabel: content.familyLabel,
     wedding: { at: content.weddingAt, timezone: content.timezone, dateText, weekdayText, lunarText: content.lunarText },
     banquet: { ...event, receptionText: clock(event.receptionAt), startsText: clock(event.startsAt) },
-    copy: content.copy, gallery: content.gallery,
+    copy: content.copy, gallery: content.gallery, media: content.media,
     music: { url: content.musicUrl === undefined ? DEFAULT_MUSIC : content.musicUrl },
     templateOptions: options,
     meta: {

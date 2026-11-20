@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -10,6 +10,7 @@ import Database from 'better-sqlite3';
 import { fixture, fixtureTable } from './fixtures';
 
 const dir = mkdtempSync(join(tmpdir(), 'shining-star-http-'));
+const cosCalls = join(dir, 'cos-calls.jsonl');
 const servers: ChildProcess[] = [];
 let base: string; let cosBase: string;
 async function startServer(extraEnv: NodeJS.ProcessEnv = {}, preload?: string) {
@@ -30,14 +31,25 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}, preload?: string) {
 }
 before(async () => {
   const db = new Database(join(dir, 'test.db')); db.exec(fixtureTable);
-  const insert = db.prepare('INSERT INTO invitations (slug,status,template_key,template_version,content_version,content,template_options,noindex,wedding_date,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+  const insert = db.prepare('INSERT INTO invitations (slug,album_slug,status,template_key,template_version,content_version,content,template_options,noindex,wedding_date,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
   for (const audience of ['couple', 'groom-parents', 'bride-parents'] as const) {
-    const row = fixture(audience); insert.run(row.slug, 'published', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
+    const row = fixture(audience); insert.run(row.slug, row.albumSlug, 'published', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
   }
   const row = fixture();
-  insert.run('sdraftabc1234', 'draft', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
-  insert.run('sbrokenab1234', 'published', row.templateKey, 1, 2, '{broken', row.templateOptions, 1, '2027-01-01', 1, 1);
-  insert.run('legacy-4abc', 'published', 'classic-red', 1, 1, row.content, null, 1, '2027-01-01', 1, 1); db.close();
+  insert.run('sdraftabc1234', row.albumSlug, 'draft', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
+  insert.run('sbrokenab1234', row.albumSlug, 'published', row.templateKey, 1, 2, '{broken', row.templateOptions, 1, '2027-01-01', 1, 1);
+  insert.run('snoalbum12345', null, 'published', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
+  insert.run('semptyabc1234', 'photoemptyabc1234', 'published', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
+  insert.run('sbadalbum1234', '../other-album', 'published', row.templateKey, 1, 2, row.content, row.templateOptions, 1, '2027-01-01', 1, 1);
+  for (const [slug, audience] of [['sdemodata1234', 'couple'], ['sdemopar12345', 'groom-parents']] as const) {
+    const demo = fixture(audience); const content = JSON.parse(demo.content);
+    const cover = { url: 'https://images.example.com/demo-cover.jpg', width: 900, height: 1200, alt: '演示封面' };
+    content.media = { cover, groomAvatarUrl: 'https://images.example.com/groom.jpg', brideAvatarUrl: 'https://images.example.com/bride.jpg' };
+    content.shareImage = cover; content.legal = null; content.gallery = [];
+    insert.run(slug, demo.albumSlug, 'published', demo.templateKey, 1, 2, JSON.stringify(content), demo.templateOptions, 1, '2027-01-01', 1, 1);
+    db.prepare('UPDATE invitations SET share_image_url=? WHERE slug=?').run(cover.url, slug);
+  }
+  insert.run('legacy-4abc', null, 'published', 'classic-red', 1, 1, row.content, null, 1, '2027-01-01', 1, 1); db.close();
   base = await startServer();
   // Replace only the external SDK transport in this child process; exercise the built API and SSR.
   const preload = join(dir, 'cos-stub.cjs');
@@ -48,8 +60,10 @@ before(async () => {
     COS.prototype.getBucket = async function (params) {
       assert.equal(params.Bucket, 'photos-1250000000');
       assert.equal(params.Region, 'ap-guangzhou');
-      if (params.Prefix === 'usersphotos/sddlh4zxebmfx/') throw new Error('AccessDenied');
-      const names = params.Prefix === 'usersphotos/s6jtlzuaybjru/' ? ['10.png', '2.png'] : [];
+      assert.ok(params.Prefix.startsWith('usersphotos/photo'));
+      require('node:fs').appendFileSync(${JSON.stringify(cosCalls)}, JSON.stringify(params.Prefix) + '\\n');
+      if (params.Prefix === 'usersphotos/photoerr123abc456/') throw new Error('AccessDenied');
+      const names = params.Prefix === 'usersphotos/photoabc123def456/' ? ['10.png', '2.png'] : [];
       return { Contents: names.map((name) => ({ Key: params.Prefix + name, ETag: 'v1', Size: '100' })), IsTruncated: 'false' };
     };
     COS.prototype.getObject = async function () {
@@ -63,22 +77,33 @@ after(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('COS mode replaces database gallery in both API and SSR; empty folders and COS errors stay distinct', async () => {
+test('COS uses the stored album slug in API and SSR, shares albums and isolates missing, empty and invalid albums', async () => {
   const response = await fetch(`${cosBase}/api/v1/invitations/s6jtlzuaybjru`);
   assert.equal(response.status, 200);
   const { data } = await response.json();
   assert.deepEqual(data.gallery.map((photo: { url: string }) => photo.url), [
-    'https://images.example.com/usersphotos/s6jtlzuaybjru/2.png',
-    'https://images.example.com/usersphotos/s6jtlzuaybjru/10.png',
+    'https://images.example.com/usersphotos/photoabc123def456/2.png',
+    'https://images.example.com/usersphotos/photoabc123def456/10.png',
   ]);
+  assert.equal(data.albumSlug, 'photoabc123def456');
   assert.deepEqual(Object.keys(data.gallery[0]).sort(), ['alt', 'url']);
   assert.doesNotMatch(JSON.stringify(data), /test-secret|section_1.webp/);
   const page = await fetch(`${cosBase}/s6jtlzuaybjru`);
-  assert.equal(page.status, 200); assert.match(await page.text(), /usersphotos\/s6jtlzuaybjru\/2.png/);
-  const empty = await fetch(`${cosBase}/api/v1/invitations/s10nxtffcpevs`);
+  assert.equal(page.status, 200); assert.match(await page.text(), /usersphotos\/photoabc123def456\/2.png/);
+  const shared = await fetch(`${cosBase}/api/v1/invitations/s10nxtffcpevs`);
+  assert.deepEqual((await shared.json()).data.gallery, data.gallery);
+  const query = await fetch(`${cosBase}/api/v1/invitations/s6jtlzuaybjru?albumSlug=photoerr123abc456`);
+  assert.deepEqual((await query.json()).data.gallery, data.gallery);
+  const calls = readFileSync(cosCalls, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+  assert.deepEqual(calls, ['usersphotos/photoabc123def456/']);
+  const empty = await fetch(`${cosBase}/api/v1/invitations/semptyabc1234`);
   assert.equal(empty.status, 200); assert.deepEqual((await empty.json()).data.gallery, []);
-  const emptyPage = await fetch(`${cosBase}/s10nxtffcpevs`);
-  assert.doesNotMatch(await emptyPage.text(), /<section[^>]*parents-gallery/);
+  const noAlbum = await fetch(`${cosBase}/api/v1/invitations/snoalbum12345`);
+  const missingData = (await noAlbum.json()).data;
+  assert.equal(noAlbum.status, 200); assert.equal(missingData.albumSlug, null); assert.deepEqual(missingData.gallery, []);
+  const emptyPage = await fetch(`${cosBase}/semptyabc1234`);
+  assert.doesNotMatch(await emptyPage.text(), /aria-label="婚礼相册"/);
+  assert.equal((await fetch(`${cosBase}/api/v1/invitations/sbadalbum1234`)).status, 500);
   const failed = await fetch(`${cosBase}/api/v1/invitations/sddlh4zxebmfx`);
   assert.equal(failed.status, 500); assert.equal((await failed.json()).error.code, 'INVITATION_UNAVAILABLE');
   for (const slug of ['unknown', 'sdraftabc1234']) assert.equal((await fetch(`${cosBase}/api/v1/invitations/${slug}`)).status, 404);
@@ -101,6 +126,16 @@ test('SSR serves meaningful static HTML and metadata, with legacy pages intact',
   assert.match(html, /https:\/\/test.example\/s6jtlzuaybjru/); assert.match(html, /og:image/);
   assert.doesNotMatch(html, /测试父亲|测试母亲/); assert.match(html, /<main[^>]*invitation-content/);
   const legacy = await fetch(`${base}/legacy-4abc`); assert.equal(legacy.status, 200); assert.match(await legacy.text(), /测试新郎/);
+});
+
+test('both templates render independent demo media, preload and metadata without old portraits or legal details', async () => {
+  for (const slug of ['sdemodata1234', 'sdemopar12345']) {
+    const response = await fetch(`${base}/${slug}`); assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /rel="preload"[^>]*href="https:\/\/images.example.com\/demo-cover.jpg"/);
+    assert.match(html, /src="https:\/\/images.example.com\/demo-cover.jpg"/);
+    assert.doesNotMatch(html, /myphotos\/(?:header|groom_avatar|bride_avatar|share-cover)|测试备案号|测试主办者/);
+  }
 });
 
 test('queries cannot switch audience; API and error states retain proper methods and caching', async () => {
